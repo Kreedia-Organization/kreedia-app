@@ -1,4 +1,4 @@
-# ⚡ Démarrage Rapide - Ecoflow
+# ⚡ Démarrage Rapide - Kreedia
 
 ## 🚀 En 3 Étapes
 
@@ -14,7 +14,7 @@ Créer `.env.local` avec :
 
 ```env
 NEXTAUTH_URL=http://localhost:3000
-NEXTAUTH_SECRET=demo-secret-for-ecoflow
+NEXTAUTH_SECRET=demo-secret-for-Kreedia
 ```
 
 ### 3. Lancement
@@ -26,7 +26,7 @@ npm run dev
 ## 🎯 Utilisation
 
 1. **Ouvrir** http://localhost:3000
-2. **Cliquer** sur "Enter Ecoflow Dashboard"
+2. **Cliquer** sur "Enter Kreedia Dashboard"
 3. **Profiter** de l'expérience complète ! 🎉
 
 ## ✨ Fonctionnalités Disponibles
@@ -90,4 +90,4 @@ colors: {
 
 ---
 
-🎉 **Prêt en 2 minutes !** L'application Ecoflow vous attend.
+🎉 **Prêt en 2 minutes !** L'application Kreedia vous attend.

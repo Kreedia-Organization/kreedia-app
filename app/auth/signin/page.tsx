@@ -74,7 +74,7 @@ const SignInPage: React.FC = () => {
                 <span className="text-white font-bold text-xl">E</span>
               </div>
               <span className="text-3xl font-bold text-foreground">
-                Ecoflow
+                Kreedia
               </span>
             </div>
             <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-4">
@@ -113,7 +113,7 @@ const SignInPage: React.FC = () => {
         <div className="flex justify-center">
           <Card className="w-full max-w-md shadow-xl">
             <CardHeader className="text-center">
-              <CardTitle className="text-2xl">Welcome to Ecoflow</CardTitle>
+              <CardTitle className="text-2xl">Welcome to Kreedia</CardTitle>
               <p className="text-gray-600 dark:text-gray-400">
                 Sign in to start your environmental journey
               </p>
@@ -137,7 +137,7 @@ const SignInPage: React.FC = () => {
                         E
                       </span>
                     </div>
-                    <span>Enter Ecoflow Dashboard</span>
+                    <span>Enter Kreedia Dashboard</span>
                   </div>
                 )}
               </Button>

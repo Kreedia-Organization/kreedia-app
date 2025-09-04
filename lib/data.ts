@@ -125,6 +125,30 @@ export const mockUserStats = {
     nftCount: mockNFTs.length,
 };
 
+export const cryptoBalances = [
+    {
+        symbol: 'USDT',
+        name: 'Tether USD',
+        balance: 1250.75,
+        logo: '/crypto-logos/usdt.svg',
+        change: 15.50,
+    },
+    {
+        symbol: 'USDC',
+        name: 'USD Coin',
+        balance: 890.25,
+        logo: '/crypto-logos/usdc.svg',
+        change: 12.80,
+    },
+    {
+        symbol: 'DAI',
+        name: 'Dai Stablecoin',
+        balance: 567.30,
+        logo: '/crypto-logos/dai.svg',
+        change: 8.90,
+    },
+];
+
 export const completedMissions = mockMissions.filter(mission => mission.status === 'Completed');
 export const availableMissions = mockMissions.filter(mission => mission.status === 'Available');
 export const inProgressMissions = mockMissions.filter(mission => mission.status === 'In Progress');

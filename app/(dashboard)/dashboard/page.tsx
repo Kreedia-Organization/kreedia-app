@@ -1,6 +1,6 @@
 "use client";
 
-import BalanceCard from "@/components/BalanceCard";
+import CryptoBalanceCard from "@/components/CryptoBalanceCard";
 import MissionCard from "@/components/MissionCard";
 import ProgressChart from "@/components/ProgressChart";
 import { Badge } from "@/components/ui/Badge";
@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import WeeklyStats from "@/components/WeeklyStats";
 import {
   availableMissions,
+  cryptoBalances,
   inProgressMissions,
   mockUserStats,
 } from "@/lib/data";
@@ -33,7 +34,7 @@ const DashboardPage: React.FC = () => {
       {/* Welcome Section */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Welcome back!</h1>
+          <h1 className="text-3xl text-foreground">Welcome back!</h1>
           <p className="text-gray-600 dark:text-gray-400">
             Ready to make a positive impact today?
           </p>
@@ -47,15 +48,31 @@ const DashboardPage: React.FC = () => {
         </Button>
       </div>
 
-      {/* Main Stats */}
+      {/* Crypto Balances */}
+      <div>
+        <h2 className="text-xl font-semibold text-foreground mb-4">
+          Your Crypto Portfolio
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {cryptoBalances.map((crypto, index) => (
+            <CryptoBalanceCard
+              key={index}
+              symbol={crypto.symbol}
+              name={crypto.name}
+              balance={crypto.balance}
+              logo={crypto.logo}
+              change={crypto.change}
+            />
+          ))}
+        </div>
+      </div>
+
+      {/* NFT Collection Card */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2">
-          <BalanceCard
-            totalBalance={mockUserStats.totalBalance}
-            weeklyGains={mockUserStats.weeklyGains}
-          />
+          {/* Espace pour d'autres statistiques si nécessaire */}
         </div>
-        <div className="space-y-4">
+        <div>
           <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white border-0">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-blue-100">

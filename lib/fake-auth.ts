@@ -10,11 +10,11 @@ export interface FakeUser {
 const FAKE_USER: FakeUser = {
     id: '1',
     name: 'Eco Warrior',
-    email: 'ecowarrior@ecoflow.app',
+    email: 'ecowarrior@Kreedia.app',
     image: '/icon.png',
 };
 
-const AUTH_KEY = 'ecoflow_auth';
+const AUTH_KEY = 'Kreedia_auth';
 
 export const fakeAuth = {
     // Connecter l'utilisateur

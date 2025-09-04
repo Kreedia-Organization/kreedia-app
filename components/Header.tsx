@@ -1,12 +1,10 @@
 "use client";
 
 import { useTheme } from "@/lib/theme-provider";
-import { Moon, Sun } from "lucide-react";
 import { useSession } from "next-auth/react";
 import Image from "next/image";
 import React, { useState } from "react";
 import NotificationSystem, { Notification } from "./NotificationSystem";
-import Button from "./ui/Button";
 
 const Header: React.FC = () => {
   const { data: session } = useSession();
@@ -60,10 +58,7 @@ const Header: React.FC = () => {
         <div className="flex items-center justify-between">
           {/* Logo */}
           <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 bg-primary-500 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-lg">E</span>
-            </div>
-            <span className="text-xl font-bold text-foreground">Ecoflow</span>
+            <img src="/logo_green.png" alt="Kreedia Logo" className=" h-8" />
           </div>
 
           {/* Right side */}
@@ -77,13 +72,13 @@ const Header: React.FC = () => {
             />
 
             {/* Theme toggle */}
-            <Button variant="ghost" size="sm" onClick={toggleTheme}>
+            {/* <Button variant="ghost" size="sm" onClick={toggleTheme}>
               {theme === "dark" ? (
                 <Sun className="h-5 w-5" />
               ) : (
                 <Moon className="h-5 w-5" />
               )}
-            </Button>
+            </Button> */}
 
             {/* User info */}
             {session?.user && (

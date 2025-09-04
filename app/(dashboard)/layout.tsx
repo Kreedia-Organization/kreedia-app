@@ -29,7 +29,7 @@ export default function DashboardLayout({
           <div className="w-16 h-16 bg-primary-500 rounded-lg flex items-center justify-center mx-auto mb-4">
             <span className="text-white font-bold text-2xl">E</span>
           </div>
-          <h1 className="text-2xl font-bold text-foreground mb-4">Ecoflow</h1>
+          <h1 className="text-2xl font-bold text-foreground mb-4">Kreedia</h1>
           <div className="w-8 h-8 border-2 border-primary-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
         </div>
       </div>
