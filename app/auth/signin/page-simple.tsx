@@ -113,7 +113,12 @@ const SimpleSignInPage: React.FC = () => {
               >
                 {isLoading ? (
                   <div className="flex items-center space-x-2">
-                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    <img
+                      src="/icon.png"
+                      alt="Kreedia Logo"
+                      className="h-6 animate-spin mx-auto"
+                      style={{ animationDuration: "1s" }}
+                    />
                     <span>Connecting...</span>
                   </div>
                 ) : (

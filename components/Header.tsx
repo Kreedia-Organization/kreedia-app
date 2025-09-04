@@ -53,7 +53,7 @@ const Header: React.FC = () => {
   };
 
   return (
-    <header className="bg-card border-b border-border sticky top-0 z-40 w-full backdrop-blur-sm">
+    <header className="bg-card border-b sticky top-0 z-40 w-full md:my-4  bg-dark-bg/60 backdrop-blur-2xl md:border border-primary-800/20 md:rounded-2xl">
       <div className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
           {/* Logo */}
@@ -71,14 +71,7 @@ const Header: React.FC = () => {
               onClearAll={handleClearAll}
             />
 
-            {/* Theme toggle */}
-            {/* <Button variant="ghost" size="sm" onClick={toggleTheme}>
-              {theme === "dark" ? (
-                <Sun className="h-5 w-5" />
-              ) : (
-                <Moon className="h-5 w-5" />
-              )}
-            </Button> */}
+            {/* Theme toggle - Disabled (Dark mode only) */}
 
             {/* User info */}
             {session?.user && (

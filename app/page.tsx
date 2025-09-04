@@ -20,10 +20,14 @@ export default function Home() {
 
   // Show loading spinner while checking session
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-50 to-white dark:from-gray-900 dark:to-gray-800 flex items-center justify-center">
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 flex items-center justify-center">
       <div className="text-center">
-        <img src="/logo_green.png" alt="Kreedia Logo" className="w-16 h-16" />
-        <div className="w-8 h-8 border-2 border-primary-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
+        <img
+          src="/icon.png"
+          alt="Kreedia Logo"
+          className="h-16 animate-spin mx-auto"
+          style={{ animationDuration: "1s" }}
+        />
       </div>
     </div>
   );

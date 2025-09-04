@@ -21,7 +21,7 @@ const CryptoBalanceCard: React.FC<CryptoBalanceCardProps> = ({
 
   return (
     <Card className="hover:shadow-md transition-all duration-200 hover:scale-[1.02]">
-      <CardContent className="p-6">
+      <CardContent className="p-3">
         <div className="flex items-center space-x-4">
           {/* Logo de la crypto */}
           <div className="w-12 h-12 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center flex-shrink-0">
@@ -47,9 +47,7 @@ const CryptoBalanceCard: React.FC<CryptoBalanceCardProps> = ({
           <div className="flex-1">
             <div className="flex items-center justify-between mb-1">
               <div>
-                <h3 className="font-semibold text-foreground text-lg">
-                  {symbol}
-                </h3>
+                <h3 className="text-sm text-foreground">{symbol}</h3>
                 <p className="text-sm text-gray-600 dark:text-gray-400">
                   {name}
                 </p>
@@ -58,14 +56,14 @@ const CryptoBalanceCard: React.FC<CryptoBalanceCardProps> = ({
 
             {/* Balance */}
             <div className="mt-2">
-              <p className="text-2xl font-bold text-foreground">
+              <p className="text-md text-foreground">
                 {formatCurrency(balance, symbol)}
               </p>
 
               {/* Changement (optionnel) */}
               {change !== 0 && (
                 <p
-                  className={`text-sm mt-1 ${
+                  className={`text-xs mt-1 ${
                     isPositive ? "text-green-600" : "text-red-600"
                   }`}
                 >

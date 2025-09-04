@@ -25,9 +25,9 @@ const NavBar: React.FC = () => {
   return (
     <>
       {/* Desktop Navigation - Top */}
-      <nav className="hidden md:flex bg-card border-b border-border">
+      <nav className="hidden md:flex bg-card max-w-xl bg-dark-bg/60 backdrop-blur-2xl border border-primary-800/20 rounded-2xl mx-auto shadow-lg">
         <div className="container mx-auto px-4">
-          <div className="flex items-center space-x-8 h-16">
+          <div className="flex items-center justify-between space-x-8 h-16">
             {navItems.map((item) => {
               const isActive = pathname === item.href;
               return (

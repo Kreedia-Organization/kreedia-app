@@ -51,9 +51,9 @@ const DashboardPage: React.FC = () => {
       {/* Crypto Balances */}
       <div>
         <h2 className="text-xl font-semibold text-foreground mb-4">
-          Your Crypto Portfolio
+          Votre portefeuille crypto & NFT
         </h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           {cryptoBalances.map((crypto, index) => (
             <CryptoBalanceCard
               key={index}
@@ -64,16 +64,8 @@ const DashboardPage: React.FC = () => {
               change={crypto.change}
             />
           ))}
-        </div>
-      </div>
-
-      {/* NFT Collection Card */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2">
-          {/* Espace pour d'autres statistiques si nécessaire */}
-        </div>
-        <div>
-          <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white border-0">
+          {/* Carte NFT ajoutée à la suite des cryptos */}
+          {/* <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white border-0 flex flex-col justify-between">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-blue-100">
                 NFT Collection
@@ -81,16 +73,32 @@ const DashboardPage: React.FC = () => {
               <Award className="h-4 w-4 text-blue-200" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{mockUserStats.nftCount}</div>
-              <p className="text-blue-100 text-sm">Unique environmental NFTs</p>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="mt-3 text-white hover:bg-white/10"
-                onClick={() => router.push("/nft")}
-              >
-                View Collection
-              </Button>
+              <div className="text-lg">{mockUserStats.nftCount}</div>
+              <p className="text-blue-100 text-sm mb-2">
+                Unique environmental NFTs
+              </p>
+            </CardContent>
+          </Card> */}
+          <Card className="hover:shadow-md transition-all duration-200 hover:scale-[1.02] bg-blue-700">
+            <CardContent className="p-3">
+              <div className="flex items-center space-x-4">
+                {/* Informations de la crypto */}
+                <div className="flex-1">
+                  <div className="flex items-center justify-between mb-1">
+                    <div>
+                      <h3 className="text-sm text-foreground">
+                        NFT collection
+                      </h3>
+                    </div>
+                  </div>
+
+                  {/* Balance */}
+                  <div className="mt-2">
+                    <p className="text-xl text-foreground font-semibold">6</p>
+                  </div>
+                  <p className="text-xs">Your environnement NFT collection</p>
+                </div>
+              </div>
             </CardContent>
           </Card>
         </div>
