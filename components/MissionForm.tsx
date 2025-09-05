@@ -4,8 +4,8 @@ import Button from "@/components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import ImageUpload from "@/components/ui/ImageUpload";
 import { useAuth } from "@/hooks/useAuth";
-import { CloudinaryUploadResult } from "@/lib/cloudinary/upload";
 import { MissionService } from "@/lib/firebase/services/missions";
+import { UploadedFile } from "@/lib/upload/api";
 import { MissionLevel, MissionStatus } from "@/types/firebase";
 import { Loader } from "@googlemaps/js-api-loader";
 import { Calendar, Clock, DollarSign, MapPin, Save, Users } from "lucide-react";
@@ -44,7 +44,7 @@ const MissionForm: React.FC = () => {
     picture: "",
     address: "",
     position: {
-      latitude: 48.8566, // Paris par défaut
+      latitude: 48.8566, // Paris by default
       longitude: 2.3522,
     },
     deadline: "",
@@ -56,7 +56,7 @@ const MissionForm: React.FC = () => {
     tags: [],
   });
 
-  // Initialiser la carte Google Maps
+  // Initialize Google Maps
   const initMap = async () => {
     try {
       const loader = new Loader({
@@ -90,11 +90,11 @@ const MissionForm: React.FC = () => {
 
         setMap(mapInstance);
 
-        // Ajouter un marker initial
+        // Add initial marker
         const initialMarker = new google.maps.Marker({
           position: formData.position,
           map: mapInstance,
-          title: "Emplacement de la mission",
+          title: "Mission location",
           draggable: true,
         });
 
@@ -150,10 +150,10 @@ const MissionForm: React.FC = () => {
     });
   };
 
-  const handleImageUpload = (result: CloudinaryUploadResult) => {
+  const handleImageUpload = (result: UploadedFile) => {
     setFormData((prev) => ({
       ...prev,
-      picture: result.secure_url,
+      picture: result.url,
     }));
     setUploadError("");
   };
@@ -166,12 +166,12 @@ const MissionForm: React.FC = () => {
     e.preventDefault();
 
     if (!user) {
-      alert("Vous devez être connecté pour créer une mission");
+      alert("You must be logged in to create a mission");
       return;
     }
 
     if (!formData.picture) {
-      setUploadError("Une image est requise pour la mission");
+      setUploadError("An image is required for the mission");
       return;
     }
 
@@ -201,11 +201,11 @@ const MissionForm: React.FC = () => {
 
       const missionId = await MissionService.createMission(missionData);
 
-      alert("Mission créée avec succès !");
+      alert("Mission created successfully!");
       router.push(`/missions`);
     } catch (error) {
       console.error("Error creating mission:", error);
-      alert("Erreur lors de la création de la mission");
+      alert("Error creating mission");
     } finally {
       setIsSubmitting(false);
     }
@@ -217,16 +217,16 @@ const MissionForm: React.FC = () => {
         <CardHeader>
           <CardTitle className="flex items-center space-x-2">
             <MapPin className="h-6 w-6 text-primary-600" />
-            <span>Créer une nouvelle mission</span>
+            <span>Create a new mission</span>
           </CardTitle>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Informations de base */}
+            {/* Basic information */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Nom de la mission *
+                  Mission Name *
                 </label>
                 <input
                   type="text"
@@ -236,13 +236,13 @@ const MissionForm: React.FC = () => {
                     setFormData((prev) => ({ ...prev, name: e.target.value }))
                   }
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-background text-foreground focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                  placeholder="Ex: Nettoyage du parc central"
+                  placeholder="Ex: Central park cleanup"
                 />
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Niveau de difficulté
+                  Difficulty Level
                 </label>
                 <select
                   value={formData.level}
@@ -254,9 +254,9 @@ const MissionForm: React.FC = () => {
                   }
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-background text-foreground focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                 >
-                  <option value={MissionLevel.EASY}>Facile</option>
-                  <option value={MissionLevel.MEDIUM}>Moyen</option>
-                  <option value={MissionLevel.HIGH}>Difficile</option>
+                  <option value={MissionLevel.EASY}>Easy</option>
+                  <option value={MissionLevel.MEDIUM}>Medium</option>
+                  <option value={MissionLevel.HIGH}>Hard</option>
                 </select>
               </div>
             </div>
@@ -277,37 +277,34 @@ const MissionForm: React.FC = () => {
                   }))
                 }
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-background text-foreground focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                placeholder="Décrivez en détail la mission et les tâches à accomplir..."
+                placeholder="Describe in detail the mission and tasks to accomplish..."
               />
             </div>
 
-            {/* Upload d'image */}
+            {/* Image upload */}
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Image de la mission *
+                Mission Image *
               </label>
               <ImageUpload
                 onUploadComplete={handleImageUpload}
                 onUploadError={handleImageUploadError}
-                uploadOptions={{
-                  preset: "MISSIONS",
-                  folder: "missions",
-                  tags: ["mission", user?.uid || "anonymous"],
-                }}
-                placeholder="Ajoutez une photo du lieu à nettoyer"
+                placeholder="Add a photo of the location to clean"
                 className="w-full"
+                maxFileSize={10}
+                acceptedTypes={["image/jpeg", "image/png", "image/webp"]}
               />
               {uploadError && (
                 <p className="text-red-600 text-sm mt-2">{uploadError}</p>
               )}
             </div>
 
-            {/* Détails temporels et financiers */}
+            {/* Time and financial details */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   <Clock className="inline h-4 w-4 mr-1" />
-                  Durée (heures)
+                  Duration (hours)
                 </label>
                 <input
                   type="number"
@@ -326,7 +323,7 @@ const MissionForm: React.FC = () => {
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   <Calendar className="inline h-4 w-4 mr-1" />
-                  Date limite
+                  Deadline
                 </label>
                 <input
                   type="datetime-local"
@@ -345,7 +342,7 @@ const MissionForm: React.FC = () => {
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   <DollarSign className="inline h-4 w-4 mr-1" />
-                  Récompense (ETH)
+                  Reward (ETH)
                 </label>
                 <input
                   type="number"
@@ -363,11 +360,11 @@ const MissionForm: React.FC = () => {
               </div>
             </div>
 
-            {/* Participants maximum */}
+            {/* Maximum participants */}
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 <Users className="inline h-4 w-4 mr-1" />
-                Nombre maximum de participants
+                Maximum number of participants
               </label>
               <input
                 type="number"
@@ -383,10 +380,10 @@ const MissionForm: React.FC = () => {
               />
             </div>
 
-            {/* Emplacement */}
+            {/* Location */}
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Emplacement de la mission
+                Mission Location
               </label>
               <div className="space-y-4">
                 <input
@@ -398,7 +395,7 @@ const MissionForm: React.FC = () => {
                       address: e.target.value,
                     }))
                   }
-                  placeholder="Adresse de la mission"
+                  placeholder="Mission address"
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-background text-foreground focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                 />
                 <div
@@ -412,12 +409,12 @@ const MissionForm: React.FC = () => {
                   className="w-full"
                 >
                   <MapPin className="h-4 w-4 mr-2" />
-                  Charger la carte
+                  Load Map
                 </Button>
               </div>
             </div>
 
-            {/* Boutons d'action */}
+            {/* Action buttons */}
             <div className="flex space-x-4 pt-6">
               <Button
                 type="button"
@@ -426,7 +423,7 @@ const MissionForm: React.FC = () => {
                 className="flex-1"
                 disabled={isSubmitting}
               >
-                Annuler
+                Cancel
               </Button>
               <Button
                 type="submit"
@@ -436,12 +433,12 @@ const MissionForm: React.FC = () => {
                 {isSubmitting ? (
                   <>
                     <Loader className="h-4 w-4 mr-2 animate-spin" />
-                    Création...
+                    Creating...
                   </>
                 ) : (
                   <>
                     <Save className="h-4 w-4 mr-2" />
-                    Créer la mission
+                    Create Mission
                   </>
                 )}
               </Button>

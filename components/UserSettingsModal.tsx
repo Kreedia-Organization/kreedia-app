@@ -2,6 +2,7 @@
 
 import { useAuth } from "@/hooks/useAuth";
 import { UserService } from "@/lib/firebase/services/users";
+import { UploadedFile } from "@/lib/upload/api";
 import { UserGender } from "@/types/firebase";
 import {
   AlertCircle,
@@ -11,9 +12,9 @@ import {
   Save,
   X,
 } from "lucide-react";
-import { CldUploadWidget } from "next-cloudinary";
 import React, { useState } from "react";
 import Button from "./ui/Button";
+import ImageUpload from "./ui/ImageUpload";
 
 interface UserSettingsModalProps {
   isOpen: boolean;
@@ -26,7 +27,6 @@ const UserSettingsModal: React.FC<UserSettingsModalProps> = ({
 }) => {
   const { user, userData, refreshUserData } = useAuth();
   const [loading, setLoading] = useState(false);
-  const [uploadingImage, setUploadingImage] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
@@ -46,9 +46,9 @@ const UserSettingsModal: React.FC<UserSettingsModalProps> = ({
   };
 
   // Handle image upload success
-  const handleImageUpload = (imageUrl: string) => {
-    setFormData((prev) => ({ ...prev, profileImage: imageUrl }));
-    console.log("Profile image updated:", imageUrl);
+  const handleImageUpload = (result: UploadedFile) => {
+    setFormData((prev) => ({ ...prev, profileImage: result.url }));
+    console.log("Profile image updated:", result.url);
   };
 
   // Handle form submission
@@ -165,61 +165,23 @@ const UserSettingsModal: React.FC<UserSettingsModalProps> = ({
                   )}
                 </div>
 
-                {/* Upload button */}
-                <CldUploadWidget
-                  uploadPreset="PROFILES"
-                  options={{
-                    maxFiles: 1,
-                    resourceType: "image",
-                    maxImageFileSize: 5000000, // 5MB
-                    folder: "profiles",
-                    cropping: true,
-                    croppingAspectRatio: 1,
-                    gravity: "center",
-                    quality: "auto",
-                    format: "auto",
-                  }}
-                  onUpload={() => {
-                    setUploadingImage(true);
-                    setError(null);
-                  }}
-                  onSuccess={(result: any) => {
-                    if (result.event === "success") {
-                      handleImageUpload(result.info.secure_url);
-                      setUploadingImage(false);
-                    }
-                  }}
-                  onError={(error: any) => {
-                    console.error("Upload error:", error);
-                    setError("Failed to upload image. Please try again.");
-                    setUploadingImage(false);
-                  }}
-                >
-                  {({ open }) => (
-                    <button
-                      type="button"
-                      onClick={() => open()}
-                      disabled={uploadingImage || loading}
-                      className="flex items-center space-x-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg transition-colors"
-                    >
-                      {uploadingImage ? (
-                        <>
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                          <span>Uploading...</span>
-                        </>
-                      ) : (
-                        <>
-                          <Camera className="h-4 w-4" />
-                          <span>Upload New Photo</span>
-                        </>
-                      )}
-                    </button>
-                  )}
-                </CldUploadWidget>
-
-                <p className="text-xs text-gray-500 dark:text-gray-400 text-center">
-                  Click to upload a new profile picture (max 5MB)
-                </p>
+                {/* Upload component */}
+                <div className="w-full max-w-xs">
+                  <ImageUpload
+                    onUploadComplete={handleImageUpload}
+                    onUploadError={(error) => {
+                      setError(error);
+                    }}
+                    existingImageUrl={formData.profileImage}
+                    placeholder="Upload profile picture"
+                    maxFileSize={5}
+                    acceptedTypes={["image/jpeg", "image/png", "image/webp"]}
+                    className="w-full"
+                  />
+                  <p className="text-xs text-gray-500 dark:text-gray-400 text-center mt-2">
+                    Click to upload a new profile picture (max 5MB)
+                  </p>
+                </div>
               </div>
             </div>
 

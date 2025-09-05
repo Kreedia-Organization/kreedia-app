@@ -8,7 +8,6 @@ const nextConfig = {
     images: {
         domains: [
             'lh3.googleusercontent.com', // Google profile images
-            'res.cloudinary.com',        // Cloudinary images
             'images.unsplash.com',       // Unsplash images (if used)
             'via.placeholder.com',       // Placeholder images
         ],
@@ -16,12 +15,6 @@ const nextConfig = {
             {
                 protocol: 'https',
                 hostname: 'lh3.googleusercontent.com',
-                port: '',
-                pathname: '/**',
-            },
-            {
-                protocol: 'https',
-                hostname: 'res.cloudinary.com',
                 port: '',
                 pathname: '/**',
             },

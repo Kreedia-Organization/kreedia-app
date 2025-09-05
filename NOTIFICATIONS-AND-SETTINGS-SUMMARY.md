@@ -146,20 +146,19 @@ const {
   - Numéro de téléphone
   - Genre (avec enum)
   - Photo de profil
-- ✅ **Upload d'image Cloudinary** intégré
+- ✅ **Upload d'image personnalisé** intégré
 - ✅ **Validation de formulaire**
 - ✅ **États de chargement** et feedback
 - ✅ **Synchronisation** Firebase Auth + Firestore
 - ✅ **Interface modale** responsive
 - ✅ **Gestion d'erreurs** complète
 
-**Intégration Cloudinary :**
+**Intégration Upload Personnalisé :**
 
-- Upload preset : `PROFILES`
-- Dossier : `profiles`
+- API personnalisée pour l'upload
 - Taille max : 5MB
-- Ratio carré (1:1) pour les avatars
-- Transformation automatique
+- Formats supportés : JPG, PNG, WebP
+- Validation côté client et serveur
 
 ### **7. Intégration dans la Page Profil**
 
@@ -211,12 +210,12 @@ match /notifications/{document} {
 }
 ```
 
-### **2. Cloudinary Upload Preset**
+### **2. API Upload Personnalisée**
 
-- **Nom :** `PROFILES`
-- **Mode :** `unsigned` (ou `signed` avec authentification)
-- **Transformations :** Redimensionnement carré, optimisation
-- **Formats :** JPG, PNG, WebP
+- **Endpoint :** `POST /api/upload`
+- **Validation :** Taille max 5MB, formats JPG/PNG/WebP
+- **Réponse :** URL du fichier uploadé
+- **Sécurité :** Validation côté serveur
 
 ### **3. Collections Firestore**
 

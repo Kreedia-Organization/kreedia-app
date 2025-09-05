@@ -2,85 +2,78 @@
 
 import { useFileUpload } from "@/hooks/useFileUpload";
 import { UploadedFile } from "@/lib/upload/api";
-import { Camera, Image as ImageIcon, Loader2, Upload, X } from "lucide-react";
+import { File, Loader2, Upload, X } from "lucide-react";
 import { useRef, useState } from "react";
 import Button from "./Button";
 
-interface ImageUploadProps {
-  onUploadComplete: (result: UploadedFile) => void;
+interface MultiFileUploadProps {
+  onUploadComplete: (files: UploadedFile[]) => void;
   onUploadError?: (error: string) => void;
-  existingImageUrl?: string;
   className?: string;
   disabled?: boolean;
   placeholder?: string;
+  maxFiles?: number;
   maxFileSize?: number; // en MB
   acceptedTypes?: string[];
+  existingFiles?: UploadedFile[];
 }
 
-const ImageUpload: React.FC<ImageUploadProps> = ({
+const MultiFileUpload: React.FC<MultiFileUploadProps> = ({
   onUploadComplete,
   onUploadError,
-  existingImageUrl,
   className = "",
   disabled = false,
-  placeholder = "Click to add an image",
+  placeholder = "Click to add files",
+  maxFiles = 10,
   maxFileSize = 10,
-  acceptedTypes = ["image/jpeg", "image/png", "image/webp"],
+  acceptedTypes = [],
+  existingFiles = [],
 }) => {
-  const [preview, setPreview] = useState<string | null>(
-    existingImageUrl || null
-  );
   const [dragActive, setDragActive] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Hook d'upload personnalisé
   const {
     isUploading,
+    uploadedFiles,
     error: uploadError,
     progress,
-    uploadSingleFile,
+    uploadMultipleFiles,
     validateFile,
-    generateImagePreview,
+    formatFileSize,
+    removeFile,
+    clearFiles,
     reset,
   } = useFileUpload({
-    maxFiles: 1,
+    maxFiles,
     maxFileSize,
     acceptedTypes,
     onSuccess: (files) => {
-      if (files.length > 0) {
-        onUploadComplete(files[0]);
-        setPreview(files[0].url);
-      }
+      onUploadComplete([...existingFiles, ...files]);
     },
     onError: (error) => {
       onUploadError?.(error);
-      setPreview(existingImageUrl || null);
     },
   });
+
+  const allFiles = [...existingFiles, ...uploadedFiles];
 
   const handleFileSelect = async (files: FileList | null) => {
     if (!files || files.length === 0) return;
 
-    const file = files[0];
+    const fileArray = Array.from(files);
 
-    // Validation
-    const validation = validateFile(file);
-    if (!validation.valid) {
-      onUploadError?.(validation.error!);
+    // Vérifier le nombre total de fichiers
+    if (allFiles.length + fileArray.length > maxFiles) {
+      onUploadError?.(`Maximum ${maxFiles} files allowed`);
       return;
     }
 
     try {
-      // Créer une prévisualisation immédiate
-      const previewUrl = await generateImagePreview(file);
-      setPreview(previewUrl);
-
-      // Upload du fichier
-      await uploadSingleFile(file);
+      await uploadMultipleFiles(fileArray);
     } catch (error) {
       console.error("Upload error:", error);
       onUploadError?.(error instanceof Error ? error.message : "Upload failed");
-      setPreview(existingImageUrl || null);
     }
   };
 
@@ -114,12 +107,19 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
     }
   };
 
-  const removeImage = () => {
-    setPreview(null);
-    reset();
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
+  const handleRemoveFile = (index: number) => {
+    if (index < existingFiles.length) {
+      // Fichier existant - on ne peut pas le supprimer via l'upload
+      return;
     }
+
+    const uploadIndex = index - existingFiles.length;
+    removeFile(uploadIndex);
+  };
+
+  const handleClearAll = () => {
+    clearFiles();
+    reset();
   };
 
   return (
@@ -127,7 +127,8 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
       <input
         ref={fileInputRef}
         type="file"
-        accept="image/*"
+        multiple
+        accept={acceptedTypes.join(",")}
         onChange={(e) => handleFileSelect(e.target.files)}
         className="hidden"
         disabled={disabled || isUploading}
@@ -150,61 +151,100 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
               ? "opacity-50 cursor-not-allowed"
               : "hover:bg-gray-50 dark:hover:bg-gray-800"
           }
-          ${preview ? "border-solid" : ""}
         `}
       >
-        {preview ? (
-          <div className="relative">
-            <img
-              src={preview}
-              alt="Preview"
-              className="w-full h-48 object-cover rounded-lg"
-            />
-
-            {/* Overlay avec actions */}
-            <div className="absolute inset-0 bg-black bg-opacity-0 hover:bg-opacity-40 transition-all duration-200 rounded-lg flex items-center justify-center">
-              <div className="opacity-0 hover:opacity-100 transition-opacity duration-200 flex space-x-2">
+        {allFiles.length > 0 ? (
+          <div className="p-4">
+            {/* Header avec actions */}
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-medium text-foreground">
+                Uploaded Files ({allFiles.length}/{maxFiles})
+              </h3>
+              <div className="flex space-x-2">
                 <Button
-                  variant="ghost"
+                  variant="outline"
                   size="sm"
                   onClick={(e) => {
                     e.stopPropagation();
                     openFileDialog();
                   }}
-                  className="bg-white/90 text-gray-800 hover:bg-white"
-                  disabled={disabled || isUploading}
+                  disabled={
+                    disabled || isUploading || allFiles.length >= maxFiles
+                  }
                 >
-                  <Camera className="h-4 w-4" />
+                  <Upload className="h-4 w-4 mr-2" />
+                  Add More
                 </Button>
                 <Button
-                  variant="ghost"
+                  variant="outline"
                   size="sm"
                   onClick={(e) => {
                     e.stopPropagation();
-                    removeImage();
+                    handleClearAll();
                   }}
-                  className="bg-red-500/90 text-white hover:bg-red-600"
                   disabled={disabled || isUploading}
                 >
-                  <X className="h-4 w-4" />
+                  <X className="h-4 w-4 mr-2" />
+                  Clear All
                 </Button>
               </div>
             </div>
 
+            {/* Liste des fichiers */}
+            <div className="space-y-2">
+              {allFiles.map((file, index) => (
+                <div
+                  key={`${file.file_name}-${index}`}
+                  className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg"
+                >
+                  <div className="flex items-center space-x-3">
+                    <File className="h-5 w-5 text-gray-400" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-foreground truncate">
+                        {file.original_name}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        {formatFileSize(file.size)} •{" "}
+                        {file.extension.toUpperCase()}
+                      </p>
+                    </div>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleRemoveFile(index);
+                    }}
+                    disabled={
+                      disabled || isUploading || index < existingFiles.length
+                    }
+                    className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+
             {/* Indicateur de chargement */}
             {isUploading && (
-              <div className="absolute inset-0 bg-black bg-opacity-50 rounded-lg flex items-center justify-center">
-                <div className="text-white text-center">
-                  <Loader2 className="h-8 w-8 animate-spin mx-auto mb-2" />
-                  <p className="text-sm">Uploading...</p>
-                  {progress > 0 && (
-                    <div className="w-32 bg-gray-200 rounded-full h-2 mt-2">
-                      <div
-                        className="bg-primary-500 h-2 rounded-full transition-all duration-300"
-                        style={{ width: `${progress}%` }}
-                      />
-                    </div>
-                  )}
+              <div className="mt-4 p-4 bg-primary-50 dark:bg-primary-900/20 rounded-lg">
+                <div className="flex items-center space-x-3">
+                  <Loader2 className="h-5 w-5 animate-spin text-primary-500" />
+                  <div className="flex-1">
+                    <p className="text-sm text-primary-700 dark:text-primary-300">
+                      Uploading files...
+                    </p>
+                    {progress > 0 && (
+                      <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
+                        <div
+                          className="bg-primary-500 h-2 rounded-full transition-all duration-300"
+                          style={{ width: `${progress}%` }}
+                        />
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             )}
@@ -215,7 +255,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
               <div className="text-center">
                 <Loader2 className="h-12 w-12 animate-spin text-primary-500 mx-auto mb-4" />
                 <p className="text-gray-600 dark:text-gray-400 mb-2">
-                  Uploading...
+                  Uploading files...
                 </p>
                 {progress > 0 && (
                   <div className="w-48 bg-gray-200 rounded-full h-2 mx-auto">
@@ -229,7 +269,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
             ) : (
               <>
                 <div className="mb-4">
-                  <ImageIcon className="h-12 w-12 text-gray-400 mx-auto mb-2" />
+                  <File className="h-12 w-12 text-gray-400 mx-auto mb-2" />
                   <Upload className="h-6 w-6 text-gray-400 mx-auto" />
                 </div>
 
@@ -238,12 +278,15 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
                 </h3>
 
                 <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                  Drag and drop your image here, or click to select
+                  Drag and drop files here, or click to select
                 </p>
 
                 <div className="text-xs text-gray-500 space-y-1">
-                  <p>Supported formats: JPG, PNG, WebP</p>
-                  <p>Maximum size: {maxFileSize}MB</p>
+                  <p>Maximum {maxFiles} files</p>
+                  <p>Maximum size: {maxFileSize}MB per file</p>
+                  {acceptedTypes.length > 0 && (
+                    <p>Accepted types: {acceptedTypes.join(", ")}</p>
+                  )}
                 </div>
 
                 {/* Affichage des erreurs */}
@@ -259,12 +302,12 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
       </div>
 
       {/* Indicateur de glisser-déposer actif */}
-      {dragActive && !preview && (
+      {dragActive && allFiles.length === 0 && (
         <div className="absolute inset-0 border-2 border-primary-500 border-dashed rounded-lg bg-primary-50 dark:bg-primary-900/20 flex items-center justify-center">
           <div className="text-center">
             <Upload className="h-8 w-8 text-primary-500 mx-auto mb-2" />
             <p className="text-primary-600 dark:text-primary-400 font-medium">
-              Drop to upload
+              Drop files to upload
             </p>
           </div>
         </div>
@@ -273,4 +316,4 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
   );
 };
 
-export default ImageUpload;
+export default MultiFileUpload;
