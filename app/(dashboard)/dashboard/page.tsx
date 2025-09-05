@@ -51,7 +51,7 @@ const DashboardPage: React.FC = () => {
       {/* Crypto Balances */}
       <div>
         <h2 className="text-xl font-semibold text-foreground mb-4">
-          Votre portefeuille crypto & NFT
+          Your crypto & NFT wallet
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           {cryptoBalances.map((crypto, index) => (
@@ -230,9 +230,10 @@ const DashboardPage: React.FC = () => {
             <Button
               variant="outline"
               className="h-20 flex flex-col items-center justify-center space-y-2"
+              onClick={() => router.push("/add-location")}
             >
               <Plus className="h-6 w-6" />
-              <span>Report Issue</span>
+              <span>Add Location</span>
             </Button>
           </div>
         </CardContent>

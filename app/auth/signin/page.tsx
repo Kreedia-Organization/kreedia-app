@@ -1,80 +1,123 @@
 "use client";
 
 import Button from "@/components/ui/Button";
-import { getSession, signIn } from "next-auth/react";
+import { useAuth } from "@/hooks/useAuth";
+import { AlertCircle, CheckCircle, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
 
 const SignInPage: React.FC = () => {
   const router = useRouter();
-  const [isLoading, setIsLoading] = useState(false);
+  const { signInWithGoogle, isAuthenticated, loading, error, clearError } =
+    useAuth();
+  const [isSigningIn, setIsSigningIn] = useState(false);
 
   useEffect(() => {
-    // Check if user is already signed in
-    getSession().then((session) => {
-      if (session) {
-        router.push("/dashboard");
-      }
-    });
-  }, [router]);
+    // Redirect if already authenticated
+    if (isAuthenticated) {
+      console.log("User already authenticated, redirecting to dashboard");
+      setIsSigningIn(false); // Reset signing in state
+      router.push("/dashboard");
+    }
+  }, [isAuthenticated, router]);
+
+  useEffect(() => {
+    // Clear any previous errors when component mounts
+    if (clearError) {
+      clearError();
+    }
+  }, [clearError]);
 
   const handleSignIn = async () => {
-    setIsLoading(true);
     try {
-      // Simulate an automatic sign-in without backend
-      const result = await signIn("credentials", {
-        callbackUrl: "/dashboard",
-        redirect: false,
-      });
-
-      if (result?.ok) {
-        router.push("/dashboard");
+      setIsSigningIn(true);
+      if (clearError) {
+        clearError();
       }
+      console.log("Attempting Google sign-in...");
+      await signInWithGoogle();
+      // Navigation will be handled by the useAuth hook
+      console.log("Sign-in process completed");
     } catch (error) {
       console.error("Sign-in error:", error);
-    } finally {
-      setIsLoading(false);
+      setIsSigningIn(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-900 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center p-4">
       <div className="text-center space-y-8 max-w-md w-full">
         {/* Logo */}
         <div className="mb-8">
           <img
             src="/logo_green.png"
             alt="Kreedia Logo"
-            className="h-16 mx-auto mb-4"
+            className="h-20 mx-auto mb-4"
           />
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+            Welcome to Kreedia
+          </h1>
         </div>
 
-        {/* Sign-in text */}
+        {/* Description */}
         <div className="space-y-4">
           <p className="text-lg text-gray-700 dark:text-gray-300">
             Connect your Google account to access Kreedia
           </p>
+          <p className="text-sm text-gray-600 dark:text-gray-400">
+            Participate in environmental cleanup missions and earn rewards
+          </p>
         </div>
 
-        {/* Google sign-in button */}
+        {/* Status message */}
+        {isSigningIn && (
+          <div className="flex items-center justify-center space-x-2 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-700">
+            <Loader2 className="h-5 w-5 animate-spin text-blue-600" />
+            <span className="text-blue-700 dark:text-blue-300">
+              Signing in...
+            </span>
+          </div>
+        )}
+
+        {/* Error message */}
+        {error && (
+          <div className="flex items-center space-x-2 p-4 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-700">
+            <AlertCircle className="h-5 w-5 text-red-600 dark:text-red-400" />
+            <span className="text-red-700 dark:text-red-300 text-sm">
+              {error}
+            </span>
+          </div>
+        )}
+
+        {/* Success message */}
+        {isAuthenticated && (
+          <div className="flex items-center space-x-2 p-4 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-700">
+            <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400" />
+            <span className="text-green-700 dark:text-green-300 text-sm">
+              Sign-in successful! Redirecting...
+            </span>
+          </div>
+        )}
+
+        {/* Sign-in button */}
         <Button
           onClick={handleSignIn}
-          disabled={isLoading}
-          className="w-full py-3 text-base bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700"
+          disabled={loading || isSigningIn || isAuthenticated}
+          className="w-full py-4 text-base bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
           size="lg"
         >
-          {isLoading ? (
+          {isSigningIn || loading ? (
             <div className="flex items-center space-x-2">
-              <img
-                src="/icon.png"
-                alt="Kreedia Logo"
-                className="h-6 animate-spin mx-auto"
-                style={{ animationDuration: "1s" }}
-              />
+              <Loader2 className="h-5 w-5 animate-spin" />
               <span>Signing in...</span>
             </div>
+          ) : isAuthenticated ? (
+            <div className="flex items-center space-x-2">
+              <CheckCircle className="h-5 w-5 text-green-600" />
+              <span>Connected! Redirecting...</span>
+            </div>
           ) : (
-            <div className="flex items-center space-x-3">
+            <div className="flex items-center justify-center space-x-3">
               <svg className="w-5 h-5" viewBox="0 0 24 24">
                 <path
                   fill="currentColor"
@@ -98,8 +141,8 @@ const SignInPage: React.FC = () => {
           )}
         </Button>
 
-        {/* Terms and Privacy */}
-        <div className="text-center text-xs text-gray-500 dark:text-gray-400 space-y-1">
+        {/* Legal information */}
+        <div className="text-center text-xs text-gray-500 dark:text-gray-400 space-y-2">
           <p>
             By signing in, you agree to our{" "}
             <a href="#" className="text-primary-600 hover:underline">
@@ -113,6 +156,21 @@ const SignInPage: React.FC = () => {
             </a>
           </p>
         </div>
+
+        {/* Debug information (development) */}
+        {process.env.NODE_ENV === "development" && (
+          <div className="mt-8 p-4 bg-gray-100 dark:bg-gray-800 rounded-lg text-left">
+            <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">
+              Authentication State (Debug)
+            </h3>
+            <div className="text-xs text-gray-600 dark:text-gray-400 space-y-1">
+              <p>Loading: {loading.toString()}</p>
+              <p>Signing In: {isSigningIn.toString()}</p>
+              <p>Authenticated: {isAuthenticated.toString()}</p>
+              <p>Error: {error || "None"}</p>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

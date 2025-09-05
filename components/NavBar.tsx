@@ -22,6 +22,20 @@ const navItems: NavItem[] = [
 const NavBar: React.FC = () => {
   const pathname = usePathname();
 
+  // Function to determine if an item should be active
+  const isItemActive = (itemHref: string) => {
+    if (itemHref === "/missions") {
+      // Missions tab is active for /missions and all location-related pages
+      return (
+        pathname === "/missions" ||
+        pathname === "/add-location" ||
+        pathname === "/my-locations" ||
+        pathname.startsWith("/location")
+      );
+    }
+    return pathname === itemHref;
+  };
+
   return (
     <>
       {/* Desktop Navigation - Top */}
@@ -29,7 +43,7 @@ const NavBar: React.FC = () => {
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between space-x-8 h-16">
             {navItems.map((item) => {
-              const isActive = pathname === item.href;
+              const isActive = isItemActive(item.href);
               return (
                 <Link
                   key={item.href}
@@ -54,7 +68,7 @@ const NavBar: React.FC = () => {
       <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-card border-t border-border z-50">
         <div className="grid grid-cols-4 h-16">
           {navItems.map((item) => {
-            const isActive = pathname === item.href;
+            const isActive = isItemActive(item.href);
             return (
               <Link
                 key={item.href}
