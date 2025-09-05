@@ -205,15 +205,43 @@ export interface MissionStats {
     lastUpdated: Timestamp;
 }
 
+// Notification types enum
+export enum NotificationType {
+    MISSION_ASSIGNED = 'MISSION_ASSIGNED',
+    MISSION_COMPLETED = 'MISSION_COMPLETED',
+    MISSION_APPROVED = 'MISSION_APPROVED',
+    MISSION_REJECTED = 'MISSION_REJECTED',
+    REWARD_EARNED = 'REWARD_EARNED',
+    LEVEL_UP = 'LEVEL_UP',
+    BADGE_EARNED = 'BADGE_EARNED',
+    SYSTEM_UPDATE = 'SYSTEM_UPDATE',
+    WELCOME = 'WELCOME',
+    REMINDER = 'REMINDER'
+}
+
+// Notification priority enum
+export enum NotificationPriority {
+    LOW = 'LOW',
+    NORMAL = 'NORMAL',
+    HIGH = 'HIGH',
+    URGENT = 'URGENT'
+}
+
 // Notification document interface
 export interface Notification extends FirestoreDocument {
     userId: string; // Reference to User ID
     title: string;
     message: string;
-    type: 'MISSION_UPDATE' | 'REWARD' | 'SYSTEM' | 'REMINDER';
+    type: NotificationType;
+    priority: NotificationPriority;
     isRead: boolean;
     actionUrl?: string;
-    metadata?: Record<string, any>;
+    metadata?: {
+        missionId?: string;
+        rewardAmount?: number;
+        badgeName?: string;
+        [key: string]: any;
+    };
 }
 
 // Collection names constants
@@ -241,3 +269,6 @@ export type UpdateMissionUserData = Partial<CreateMissionUserData>;
 
 export type CreateLocationSubmissionData = Omit<LocationSubmission, 'id' | 'createdAt' | 'updatedAt'>;
 export type UpdateLocationSubmissionData = Partial<CreateLocationSubmissionData>;
+
+export type CreateNotificationData = Omit<Notification, 'id' | 'createdAt' | 'updatedAt'>;
+export type UpdateNotificationData = Partial<CreateNotificationData>;

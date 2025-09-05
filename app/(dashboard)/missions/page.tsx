@@ -152,7 +152,7 @@ const MissionsPage: React.FC = () => {
         <div>
           <h1 className="text-3xl font-bold text-foreground">Missions</h1>
           <p className="text-gray-600 dark:text-gray-400">
-            Contribuez au nettoyage environnemental et gagnez des récompenses
+            Contribute to environmental cleanup and earn rewards
           </p>
         </div>
         <div className="flex flex-col sm:flex-row gap-2">
@@ -161,7 +161,7 @@ const MissionsPage: React.FC = () => {
             className="flex items-center space-x-2"
           >
             <Plus className="h-4 w-4" />
-            <span>Créer une mission</span>
+            <span>Create a mission</span>
           </Button>
           <Button
             variant="outline"

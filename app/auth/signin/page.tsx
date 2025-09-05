@@ -45,7 +45,7 @@ const SignInPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 flex items-center justify-center p-4">
       <div className="text-center space-y-8 max-w-md w-full">
         {/* Logo */}
         <div className="mb-8">
@@ -54,17 +54,17 @@ const SignInPage: React.FC = () => {
             alt="Kreedia Logo"
             className="h-20 mx-auto mb-4"
           />
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+          <h1 className="text-2xl font-bold text-gray-100">
             Welcome to Kreedia
           </h1>
         </div>
 
         {/* Description */}
         <div className="space-y-4">
-          <p className="text-lg text-gray-700 dark:text-gray-300">
+          <p className="text-lg text-gray-300">
             Connect your Google account to access Kreedia
           </p>
-          <p className="text-sm text-gray-600 dark:text-gray-400">
+          <p className="text-sm text-gray-400">
             Participate in environmental cleanup missions and earn rewards
           </p>
         </div>

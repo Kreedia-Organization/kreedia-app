@@ -5,42 +5,13 @@ import { useTheme } from "@/lib/theme-provider";
 import { ChevronDown, LogOut, Settings, User, Wallet } from "lucide-react";
 import Image from "next/image";
 import React, { useEffect, useRef, useState } from "react";
-import NotificationSystem, { Notification } from "./NotificationSystem";
+import NotificationDropdown from "./NotificationDropdown";
 
 const Header: React.FC = () => {
   const { user, userData, signOut, loading } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const [showUserMenu, setShowUserMenu] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
-
-  const [notifications, setNotifications] = useState<Notification[]>([
-    {
-      id: "1",
-      type: "success",
-      title: "Mission Completed!",
-      message:
-        "Your Central Park cleanup has been validated. You earned 0.15 ETH!",
-      timestamp: new Date(Date.now() - 2 * 60 * 1000),
-      read: false,
-    },
-    {
-      id: "2",
-      type: "info",
-      title: "New NFT Earned",
-      message:
-        'You received the "Beach Guardian" NFT for your outstanding cleanup work!',
-      timestamp: new Date(Date.now() - 15 * 60 * 1000),
-      read: false,
-    },
-    {
-      id: "3",
-      type: "warning",
-      title: "Mission Deadline",
-      message: "Your River cleanup mission has 2 days remaining.",
-      timestamp: new Date(Date.now() - 60 * 60 * 1000),
-      read: true,
-    },
-  ]);
 
   // Fermer le menu utilisateur en cliquant à l'extérieur
   useEffect(() => {
@@ -59,16 +30,6 @@ const Header: React.FC = () => {
     };
   }, []);
 
-  const handleMarkAsRead = (id: string) => {
-    setNotifications((prev) =>
-      prev.map((notif) => (notif.id === id ? { ...notif, read: true } : notif))
-    );
-  };
-
-  const handleDismiss = (id: string) => {
-    setNotifications((prev) => prev.filter((notif) => notif.id !== id));
-  };
-
   const handleSignOut = async () => {
     try {
       await signOut();
@@ -76,10 +37,6 @@ const Header: React.FC = () => {
     } catch (error) {
       console.error("Sign-out error:", error);
     }
-  };
-
-  const handleClearAll = () => {
-    setNotifications([]);
   };
 
   return (
@@ -94,12 +51,7 @@ const Header: React.FC = () => {
           {/* Right side */}
           <div className="flex items-center space-x-4">
             {/* Notifications */}
-            <NotificationSystem
-              notifications={notifications}
-              onMarkAsRead={handleMarkAsRead}
-              onDismiss={handleDismiss}
-              onClearAll={handleClearAll}
-            />
+            <NotificationDropdown userId={user?.uid || null} />
 
             {/* Theme toggle - Disabled (Dark mode only) */}
 

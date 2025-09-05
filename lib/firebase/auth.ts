@@ -10,6 +10,7 @@ import {
 } from 'firebase/auth';
 import { doc, serverTimestamp, setDoc } from 'firebase/firestore';
 import { auth, db, googleProvider } from './config';
+import { NotificationService } from './services/notifications';
 import { UserService } from './services/users';
 
 export class AuthService {
@@ -79,9 +80,20 @@ export class AuthService {
      */
     static async getCurrentUserData(): Promise<User | null> {
         const firebaseUser = this.getCurrentUser();
-        if (!firebaseUser) return null;
+        if (!firebaseUser) {
+            console.log('📊 No Firebase user found');
+            return null;
+        }
 
-        return await UserService.getUserById(firebaseUser.uid);
+        console.log('📊 Fetching Firestore data for user:', firebaseUser.uid);
+        try {
+            const userData = await UserService.getUserById(firebaseUser.uid);
+            console.log('📊 Firestore user data result:', userData);
+            return userData;
+        } catch (error) {
+            console.error('📊 Error fetching user data from Firestore:', error);
+            throw error;
+        }
     }
 
     /**
@@ -128,6 +140,18 @@ export class AuthService {
                 });
 
                 console.log('✅ New user created in Firestore:', firebaseUser.uid);
+
+                // Create welcome notification for new user
+                try {
+                    await NotificationService.createWelcomeNotification(
+                        firebaseUser.uid,
+                        newUserData.name
+                    );
+                    console.log('✅ Welcome notification created');
+                } catch (notifError) {
+                    console.warn('⚠️ Failed to create welcome notification:', notifError);
+                    // Don't throw error as user creation succeeded
+                }
             } else {
                 console.log('Updating existing user in Firestore...');
                 // Update existing user with latest info from Firebase Auth

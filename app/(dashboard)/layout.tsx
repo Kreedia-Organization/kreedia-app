@@ -12,7 +12,8 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { user, userData, loading, error, isAuthenticated } = useAuth();
+  const { user, userData, loading, error, isAuthenticated, signOut } =
+    useAuth();
   const router = useRouter();
   const [isRedirecting, setIsRedirecting] = useState(false);
 
@@ -65,10 +66,20 @@ export default function DashboardLayout({
           </h1>
           <p className="text-gray-400">{error}</p>
           <button
-            onClick={() => router.push("/auth/signin")}
+            onClick={async () => {
+              try {
+                console.log("Signing out due to authentication error...");
+                await signOut();
+                // signOut already handles the redirection to /auth/signin
+              } catch (err) {
+                console.error("Error during sign out:", err);
+                // Fallback: direct navigation if signOut fails
+                router.push("/auth/signin");
+              }
+            }}
             className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
           >
-            Back to Sign In
+            Sign Out & Return
           </button>
         </div>
       </div>

@@ -6,7 +6,9 @@ import ProgressChart from "@/components/ProgressChart";
 import { Badge } from "@/components/ui/Badge";
 import Button from "@/components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
+import WalletConnectPrompt from "@/components/WalletConnectPrompt";
 import WeeklyStats from "@/components/WeeklyStats";
+import { useWallet } from "@/hooks/useWallet";
 import {
   availableMissions,
   cryptoBalances,
@@ -19,6 +21,12 @@ import React from "react";
 
 const DashboardPage: React.FC = () => {
   const router = useRouter();
+  const {
+    hasWalletInFirestore,
+    loading: walletLoading,
+    address,
+    userData,
+  } = useWallet();
 
   const handleStartMission = (missionId: string) => {
     console.log("Starting mission:", missionId);
@@ -48,60 +56,76 @@ const DashboardPage: React.FC = () => {
         </Button>
       </div>
 
-      {/* Crypto Balances */}
+      {/* Crypto Balances & Wallet Connection */}
       <div>
-        <h2 className="text-xl font-semibold text-foreground mb-4">
-          Your crypto & NFT wallet
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          {cryptoBalances.map((crypto, index) => (
-            <CryptoBalanceCard
-              key={index}
-              symbol={crypto.symbol}
-              name={crypto.name}
-              balance={crypto.balance}
-              logo={crypto.logo}
-              change={crypto.change}
-            />
-          ))}
-          {/* Carte NFT ajoutée à la suite des cryptos */}
-          {/* <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white border-0 flex flex-col justify-between">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-blue-100">
-                NFT Collection
-              </CardTitle>
-              <Award className="h-4 w-4 text-blue-200" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-lg">{mockUserStats.nftCount}</div>
-              <p className="text-blue-100 text-sm mb-2">
-                Unique environmental NFTs
-              </p>
-            </CardContent>
-          </Card> */}
-          <Card className="hover:shadow-md transition-all duration-200 hover:scale-[1.02] bg-blue-700">
-            <CardContent className="p-3">
-              <div className="flex items-center space-x-4">
-                {/* Informations de la crypto */}
-                <div className="flex-1">
-                  <div className="flex items-center justify-between mb-1">
-                    <div>
-                      <h3 className="text-sm text-foreground">
-                        NFT collection
-                      </h3>
-                    </div>
-                  </div>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-semibold text-foreground">
+            Your crypto & NFT wallet
+          </h2>
 
-                  {/* Balance */}
-                  <div className="mt-2">
-                    <p className="text-xl text-foreground font-semibold">6</p>
-                  </div>
-                  <p className="text-xs">Your environnement NFT collection</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          {/* Wallet Status Indicator */}
+          {address && (
+            <div className="flex items-center space-x-2 text-sm">
+              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+              <span className="text-gray-600 dark:text-gray-400">
+                Wallet connected: {address.slice(0, 6)}...{address.slice(-4)}
+              </span>
+            </div>
+          )}
         </div>
+
+        {/* Affichage conditionnel selon l'état du wallet */}
+        {!hasWalletInFirestore ? (
+          // Affichage flouté avec prompt de connexion wallet
+          <WalletConnectPrompt />
+        ) : (
+          // Affichage normal des balances crypto
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            {cryptoBalances.map((crypto, index) => (
+              <CryptoBalanceCard
+                key={index}
+                symbol={crypto.symbol}
+                name={crypto.name}
+                balance={crypto.balance}
+                logo={crypto.logo}
+                change={crypto.change}
+              />
+            ))}
+
+            {/* Carte NFT */}
+            <Card className="hover:shadow-md transition-all duration-200 hover:scale-[1.02] bg-blue-700">
+              <CardContent className="p-3">
+                <div className="flex items-center space-x-4">
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between mb-1">
+                      <div>
+                        <h3 className="text-sm text-foreground">
+                          NFT collection
+                        </h3>
+                      </div>
+                    </div>
+                    <div className="mt-2">
+                      <p className="text-xl text-foreground font-semibold">
+                        {userData?.totalMissionsCompleted || 0}
+                      </p>
+                    </div>
+                    <p className="text-xs">Your environment NFT collection</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* Loading state */}
+        {walletLoading && (
+          <div className="text-center py-8">
+            <div className="inline-flex items-center space-x-2 text-gray-600 dark:text-gray-400">
+              <div className="w-4 h-4 border-2 border-primary-600 border-t-transparent rounded-full animate-spin"></div>
+              <span>Synchronizing wallet...</span>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Weekly Stats */}

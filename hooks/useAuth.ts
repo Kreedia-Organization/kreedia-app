@@ -56,38 +56,53 @@ export const useAuth = (): UseAuthReturn => {
 
             try {
                 if (firebaseUser) {
-                    console.log('User authenticated:', firebaseUser.uid);
+                    console.log('✅ User authenticated:', firebaseUser.uid);
+                    console.log('🔍 Firebase User details:', {
+                        uid: firebaseUser.uid,
+                        email: firebaseUser.email,
+                        displayName: firebaseUser.displayName,
+                        emailVerified: firebaseUser.emailVerified
+                    });
                     setUser(firebaseUser);
 
                     // Get user data from Firestore
-                    console.log('Fetching user data from Firestore...');
-                    const firestoreUserData = await AuthService.getCurrentUserData();
+                    console.log('📊 Fetching user data from Firestore...');
+                    try {
+                        const firestoreUserData = await AuthService.getCurrentUserData();
 
-                    if (mounted) {
-                        setUserData(firestoreUserData);
-                        console.log('Firestore data loaded:', firestoreUserData);
+                        if (mounted) {
+                            setUserData(firestoreUserData);
+                            console.log('✅ Firestore data loaded:', firestoreUserData);
 
-                        // Navigate to dashboard only if we're on sign-in page and auth is initialized
-                        if (authInitialized && window.location.pathname === '/auth/signin') {
-                            console.log('Redirecting to dashboard...');
-                            router.push('/dashboard');
+                            // Navigate to dashboard only if we're on sign-in page and auth is initialized
+                            if (authInitialized && window.location.pathname === '/auth/signin') {
+                                console.log('🔄 Redirecting to dashboard...');
+                                router.push('/dashboard');
+                            }
+                        }
+                    } catch (firestoreErr) {
+                        console.error('❌ Firestore error:', firestoreErr);
+                        // Don't set error here - user is still authenticated
+                        if (mounted) {
+                            setUserData(null);
+                            console.warn('⚠️ User authenticated but Firestore data unavailable');
                         }
                     }
                 } else {
-                    console.log('User not authenticated');
+                    console.log('❌ User not authenticated');
                     setUser(null);
                     setUserData(null);
 
                     // Navigate to sign-in only if we're not already there and auth is initialized
                     if (authInitialized && window.location.pathname !== '/auth/signin') {
-                        console.log('Redirecting to sign-in...');
+                        console.log('🔄 Redirecting to sign-in...');
                         router.push('/auth/signin');
                     }
                 }
             } catch (err) {
-                console.error('Error in auth state change:', err);
+                console.error('❌ Critical error in auth state change:', err);
                 if (mounted) {
-                    setError('Error loading user data');
+                    setError(`Authentication error: ${err instanceof Error ? err.message : 'Unknown error'}`);
                     setUserData(null);
                 }
             } finally {
