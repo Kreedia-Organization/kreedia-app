@@ -66,7 +66,14 @@ const Header: React.FC = () => {
                     <p className="text-sm font-medium text-foreground">
                       {userData.name || user.displayName || "User"}
                     </p>
-                    <p className="text-xs text-gray-500">{user.email}</p>
+                    <p className="text-xs text-gray-500">
+                      {userData.walletAddress
+                        ? `${userData.walletAddress.slice(
+                            0,
+                            6
+                          )}...${userData.walletAddress.slice(-4)}`
+                        : user.email}
+                    </p>
                   </div>
                   <div className="relative">
                     <Image
@@ -109,12 +116,16 @@ const Header: React.FC = () => {
                             {userData.name || user.displayName || "User"}
                           </p>
                           <p className="text-xs text-gray-500 truncate">
-                            {user.email}
+                            {userData.walletAddress
+                              ? `${userData.walletAddress.slice(
+                                  0,
+                                  6
+                                )}...${userData.walletAddress.slice(-4)}`
+                              : user.email}
                           </p>
                           {userData.walletAddress && (
                             <p className="text-xs text-green-600 dark:text-green-400 truncate">
-                              {userData.walletAddress.slice(0, 6)}...
-                              {userData.walletAddress.slice(-4)}
+                              Wallet Connected
                             </p>
                           )}
                         </div>
