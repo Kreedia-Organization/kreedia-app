@@ -1,4 +1,4 @@
-# Ecoflow Setup Guide
+# Kreedia Setup Guide
 
 ## 🚀 Quick Start
 
@@ -87,7 +87,7 @@ lib/
 
 ## 🌍 Environmental Theme
 
-Ecoflow transforms environmental actions into crypto rewards:
+Kreedia transforms environmental actions into crypto rewards:
 
 - **Green Color Scheme**: Primary color #22c55e (green-500)
 - **Eco-friendly Icons**: Leaf, tree, recycling symbols

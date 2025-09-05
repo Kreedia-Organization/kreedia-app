@@ -63,7 +63,7 @@ const SimpleHeader: React.FC = () => {
             <div className="w-8 h-8 bg-primary-500 rounded-lg flex items-center justify-center">
               <span className="text-white font-bold text-lg">E</span>
             </div>
-            <span className="text-xl font-bold text-foreground">Ecoflow</span>
+            <span className="text-xl font-bold text-foreground">Kreedia</span>
           </div>
 
           {/* Right side */}

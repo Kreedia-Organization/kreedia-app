@@ -3,9 +3,11 @@
 import { Badge } from "@/components/ui/Badge";
 import Button from "@/components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
-import { mockNFTs, mockUserStats } from "@/lib/data";
-import { formatCurrency, formatDate } from "@/lib/utils";
+import UserSettingsModal from "@/components/UserSettingsModal";
+import { useAuth } from "@/hooks/useAuth";
+import { formatDate } from "@/lib/utils";
 import {
+  AlertCircle,
   Award,
   Calendar,
   Download,
@@ -16,15 +18,24 @@ import {
   TrendingUp,
   User,
 } from "lucide-react";
-import { signOut, useSession } from "next-auth/react";
 import Image from "next/image";
-import React from "react";
+import React, { useState } from "react";
 
 const ProfilePage: React.FC = () => {
-  const { data: session } = useSession();
+  const { user, userData, signOut } = useAuth();
+  const [isSigningOut, setIsSigningOut] = useState(false);
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
 
-  const handleSignOut = () => {
-    signOut({ callbackUrl: "/auth/signin" });
+  const handleSignOut = async () => {
+    try {
+      setIsSigningOut(true);
+      console.log("Initiating sign out from profile page...");
+      await signOut();
+      console.log("Sign out completed");
+    } catch (error) {
+      console.error("Sign out error:", error);
+      setIsSigningOut(false);
+    }
   };
 
   const achievements = [
@@ -86,6 +97,20 @@ const ProfilePage: React.FC = () => {
     },
   ];
 
+  // Loading state
+  if (!user) {
+    return (
+      <div className="space-y-6">
+        <div className="text-center py-12">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600 dark:text-gray-400">
+            Loading profile...
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -95,17 +120,43 @@ const ProfilePage: React.FC = () => {
           <p className="text-gray-600 dark:text-gray-400">
             Your environmental impact and achievements
           </p>
+          {/* Debug info in development */}
+          {process.env.NODE_ENV === "development" && (
+            <div className="mt-2 text-xs text-gray-500">
+              Firebase User: {user ? "✅" : "❌"} | Firestore Data:{" "}
+              {userData ? "✅" : "❌"}
+            </div>
+          )}
         </div>
         <div className="flex items-center space-x-2">
           <Button variant="outline" size="sm">
             <Share2 className="h-4 w-4 mr-2" />
             Share Profile
           </Button>
-          <Button variant="outline" size="sm">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowSettingsModal(true)}
+          >
             <Settings className="h-4 w-4" />
           </Button>
         </div>
       </div>
+
+      {/* Warning if no Firestore data */}
+      {!userData && (
+        <Card className="border-yellow-200 bg-yellow-50 dark:bg-yellow-900/20 dark:border-yellow-700">
+          <CardContent className="p-4">
+            <div className="flex items-center space-x-2 text-yellow-800 dark:text-yellow-200">
+              <AlertCircle className="h-5 w-5" />
+              <span className="text-sm">
+                Profile data is loading from Firestore. Some information may be
+                limited to Firebase Auth data.
+              </span>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* User Info Card */}
@@ -113,10 +164,10 @@ const ProfilePage: React.FC = () => {
           <Card>
             <CardHeader className="text-center">
               <div className="mx-auto mb-4">
-                {session?.user?.image ? (
+                {user?.photoURL ? (
                   <Image
-                    src={session.user.image}
-                    alt={session.user.name || "User"}
+                    src={user.photoURL}
+                    alt={user.displayName || "User"}
                     width={80}
                     height={80}
                     className="rounded-full border-4 border-primary-200"
@@ -128,11 +179,13 @@ const ProfilePage: React.FC = () => {
                 )}
               </div>
               <CardTitle className="text-xl">
-                {session?.user?.name || "Eco Warrior"}
+                {user?.displayName || userData?.name || "Eco Warrior"}
               </CardTitle>
               <div className="flex items-center justify-center space-x-1 text-gray-600 dark:text-gray-400">
                 <Mail className="h-4 w-4" />
-                <span className="text-sm">{session?.user?.email}</span>
+                <span className="text-sm">
+                  {user?.email || userData?.email || "No email"}
+                </span>
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -140,20 +193,46 @@ const ProfilePage: React.FC = () => {
                 <span className="text-gray-600 dark:text-gray-400">
                   Member since
                 </span>
-                <span className="font-medium">March 2024</span>
+                <span className="font-medium">
+                  {userData?.createdAt
+                    ? formatDate(userData.createdAt.toDate())
+                    : "Recently"}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-gray-600 dark:text-gray-400">
+                  User ID
+                </span>
+                <span className="font-mono text-xs text-gray-500">
+                  {user?.uid?.slice(0, 8) || "N/A"}...
+                </span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-gray-600 dark:text-gray-400">
                   Eco Level
                 </span>
-                <Badge className="bg-primary-500 text-white">Level 12</Badge>
+                <Badge className="bg-primary-500 text-white">
+                  Level {userData?.level || 1}
+                </Badge>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-gray-600 dark:text-gray-400">Status</span>
+                <Badge
+                  className={`${
+                    userData?.status === "ACTIVE"
+                      ? "bg-green-500 text-white"
+                      : "bg-gray-500 text-white"
+                  }`}
+                >
+                  {userData?.status || "UNKNOWN"}
+                </Badge>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-gray-600 dark:text-gray-400">
-                  Total Earnings
+                  Total Rewards
                 </span>
                 <span className="font-bold text-primary-600">
-                  {formatCurrency(mockUserStats.totalBalance)}
+                  {userData?.totalRewardsEarned || 0} ETH
                 </span>
               </div>
 
@@ -161,9 +240,10 @@ const ProfilePage: React.FC = () => {
                 variant="outline"
                 className="w-full mt-4"
                 onClick={handleSignOut}
+                disabled={isSigningOut}
               >
                 <LogOut className="h-4 w-4 mr-2" />
-                Sign Out
+                {isSigningOut ? "Signing Out..." : "Sign Out"}
               </Button>
             </CardContent>
           </Card>
@@ -183,7 +263,7 @@ const ProfilePage: React.FC = () => {
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div className="text-center">
                   <div className="text-2xl font-bold text-primary-600">
-                    {mockUserStats.missionsCompleted}
+                    {userData?.totalMissionsCompleted || 0}
                   </div>
                   <div className="text-sm text-gray-600 dark:text-gray-400">
                     Missions Completed
@@ -191,26 +271,26 @@ const ProfilePage: React.FC = () => {
                 </div>
                 <div className="text-center">
                   <div className="text-2xl font-bold text-green-600">
-                    {mockUserStats.areasImpacted}
+                    {userData?.totalRewardsEarned || 0}
                   </div>
                   <div className="text-sm text-gray-600 dark:text-gray-400">
-                    Areas Cleaned
+                    Total Rewards (ETH)
                   </div>
                 </div>
                 <div className="text-center">
                   <div className="text-2xl font-bold text-blue-600">
-                    {mockUserStats.photosSubmitted}
+                    {userData?.level || 1}
                   </div>
                   <div className="text-sm text-gray-600 dark:text-gray-400">
-                    Photos Submitted
+                    Current Level
                   </div>
                 </div>
                 <div className="text-center">
                   <div className="text-2xl font-bold text-purple-600">
-                    {mockNFTs.length}
+                    {userData?.badges?.length || 0}
                   </div>
                   <div className="text-sm text-gray-600 dark:text-gray-400">
-                    NFTs Earned
+                    Badges Earned
                   </div>
                 </div>
               </div>
@@ -323,6 +403,57 @@ const ProfilePage: React.FC = () => {
           </Card>
         </div>
       </div>
+
+      {/* Debug information (development only) */}
+      {process.env.NODE_ENV === "development" && (
+        <Card className="border-blue-200 bg-blue-50 dark:bg-blue-900/20 dark:border-blue-700">
+          <CardHeader>
+            <CardTitle className="text-sm text-blue-800 dark:text-blue-200">
+              🔍 Development Debug Info
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2 text-xs">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <strong>Firebase Auth:</strong>
+                <br />
+                UID: {user?.uid || "N/A"}
+                <br />
+                Email: {user?.email || "N/A"}
+                <br />
+                Display Name: {user?.displayName || "N/A"}
+                <br />
+                Email Verified: {user?.emailVerified?.toString() || "N/A"}
+              </div>
+              <div>
+                <strong>Firestore Data:</strong>
+                <br />
+                Data Available: {userData ? "✅ Yes" : "❌ No"}
+                <br />
+                Status: {userData?.status || "N/A"}
+                <br />
+                Level: {userData?.level || "N/A"}
+                <br />
+                Total Missions: {userData?.totalMissionsCompleted || "N/A"}
+                <br />
+                Total Rewards: {userData?.totalRewardsEarned || "N/A"}
+              </div>
+            </div>
+            {!userData && (
+              <div className="mt-3 p-2 bg-yellow-100 dark:bg-yellow-900/30 rounded text-yellow-800 dark:text-yellow-200">
+                <strong>⚠️ Firestore Data Missing:</strong> Check `/debug` page
+                for diagnostics
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Settings Modal */}
+      <UserSettingsModal
+        isOpen={showSettingsModal}
+        onClose={() => setShowSettingsModal(false)}
+      />
     </div>
   );
 };

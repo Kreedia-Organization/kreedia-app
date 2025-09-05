@@ -1,6 +1,7 @@
 "use client";
 
 import { SessionProvider } from "next-auth/react";
+import { RainbowKitProviders } from "./rainbowkit/providers";
 import { ThemeProvider } from "./theme-provider";
 
 interface ProvidersProps {
@@ -10,7 +11,9 @@ interface ProvidersProps {
 export function Providers({ children }: ProvidersProps) {
   return (
     <SessionProvider>
-      <ThemeProvider>{children}</ThemeProvider>
+      <ThemeProvider>
+        <RainbowKitProviders>{children}</RainbowKitProviders>
+      </ThemeProvider>
     </SessionProvider>
   );
 }

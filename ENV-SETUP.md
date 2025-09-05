@@ -1,4 +1,4 @@
-# 🔧 Configuration Environnement - Ecoflow
+# 🔧 Configuration Environnement - Kreedia
 
 ## Variables d'Environnement Requises
 
@@ -7,7 +7,7 @@ Créez un fichier `.env.local` à la racine du projet avec :
 ```env
 # NextAuth Configuration pour Demo
 NEXTAUTH_URL=http://localhost:3000
-NEXTAUTH_SECRET=demo-secret-key-for-ecoflow-frontend-only
+NEXTAUTH_SECRET=demo-secret-key-for-Kreedia-frontend-only
 
 # Variables factices (non utilisées mais requises par NextAuth)
 GOOGLE_CLIENT_ID=demo
@@ -37,7 +37,7 @@ GOOGLE_CLIENT_SECRET=demo
 
 4. **Accéder à l'application :**
    - Ouvrir http://localhost:3000
-   - Cliquer sur "Enter Ecoflow Dashboard"
+   - Cliquer sur "Enter Kreedia Dashboard"
    - Connexion automatique simulée ! 🎉
 
 ## 🎯 Mode Demo

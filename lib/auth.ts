@@ -11,7 +11,7 @@ export const authOptions: NextAuthOptions = {
                 return {
                     id: '1',
                     name: 'Eco Warrior',
-                    email: 'ecowarrior@ecoflow.app',
+                    email: 'ecowarrior@Kreedia.app',
                     image: '/icon.png',
                 };
             },

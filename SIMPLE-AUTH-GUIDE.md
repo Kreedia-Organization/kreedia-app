@@ -1,8 +1,8 @@
-# 🔐 Guide d'Authentification Simplifiée - Ecoflow
+# 🔐 Guide d'Authentification Simplifiée - Kreedia
 
 ## 🎯 Objectif
 
-Ce guide explique comment utiliser le système d'authentification **frontend-only** pour Ecoflow, parfait pour les démonstrations et le développement sans backend.
+Ce guide explique comment utiliser le système d'authentification **frontend-only** pour Kreedia, parfait pour les démonstrations et le développement sans backend.
 
 ## 🚀 Options d'Authentification
 
@@ -34,7 +34,7 @@ La page de connexion actuelle (`app/auth/signin/page.tsx`) utilise NextAuth avec
 
 **Flux :**
 
-1. L'utilisateur clique sur "Enter Ecoflow Dashboard"
+1. L'utilisateur clique sur "Enter Kreedia Dashboard"
 2. NextAuth simule une connexion avec des données factices
 3. Redirection automatique vers `/dashboard`
 
@@ -77,7 +77,7 @@ Pour utiliser le système d'auth factice pur :
 const FAKE_USER = {
   id: "1",
   name: "Eco Warrior",
-  email: "ecowarrior@ecoflow.app",
+  email: "ecowarrior@Kreedia.app",
   image: "/icon.png",
 };
 ```
@@ -90,7 +90,7 @@ const FAKE_USER = {
 ### Stockage
 
 - **NextAuth :** Utilise les sessions internes NextAuth
-- **Auth Factice :** Utilise `localStorage` avec la clé `ecoflow_auth`
+- **Auth Factice :** Utilise `localStorage` avec la clé `Kreedia_auth`
 
 ## 🎮 Utilisation
 
@@ -118,13 +118,13 @@ const FAKE_USERS = [
   {
     id: "1",
     name: "Eco Warrior",
-    email: "ecowarrior@ecoflow.app",
+    email: "ecowarrior@Kreedia.app",
     image: "/icon.png",
   },
   {
     id: "2",
     name: "Green Guardian",
-    email: "green@ecoflow.app",
+    email: "green@Kreedia.app",
     image: "/icon.png",
   },
 ];
@@ -192,4 +192,4 @@ Les deux options fonctionnent parfaitement en production pour une démonstration
 
 ---
 
-🎭 **Mode Démo Activé** - Profitez de votre expérience Ecoflow sans contraintes techniques !
+🎭 **Mode Démo Activé** - Profitez de votre expérience Kreedia sans contraintes techniques !

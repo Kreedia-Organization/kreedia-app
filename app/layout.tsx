@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Ecoflow - Clean the Environment, Earn Crypto",
+  title: "Kreedia - Clean the Environment, Earn Crypto",
   description:
     "Turn your environmental actions into tangible rewards. Join the revolutionary movement.",
   keywords: [
@@ -12,11 +12,11 @@ export const metadata: Metadata = {
     "NFT",
     "blockchain",
     "sustainability",
-    "ecoflow",
+    "Kreedia",
   ],
-  authors: [{ name: "Ecoflow Team" }],
+  authors: [{ name: "Kreedia Team" }],
   openGraph: {
-    title: "Ecoflow - Clean the Environment, Earn Crypto",
+    title: "Kreedia - Clean the Environment, Earn Crypto",
     description: "Turn your environmental actions into tangible rewards",
     type: "website",
   },

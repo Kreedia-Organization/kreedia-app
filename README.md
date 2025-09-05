@@ -1,8 +1,8 @@
-# 🌱 Ecoflow - Clean the Environment, Earn Crypto
+# 🌱 Kreedia - Clean the Environment, Earn Crypto
 
 Une application complète Next.js 14 qui transforme les actions environnementales en récompenses crypto et NFTs.
 
-![Ecoflow Logo](public/logo_green.png)
+![Kreedia Logo](public/logo_green.png)
 
 ## ✨ Fonctionnalités
 

@@ -12,26 +12,22 @@ interface ThemeContextType {
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setTheme] = useState<Theme>("light");
+  const [theme, setTheme] = useState<Theme>("dark"); // Force dark mode
 
   useEffect(() => {
-    // Get theme from localStorage or use system preference
-    const savedTheme = localStorage.getItem("theme") as Theme;
-    const systemTheme = window.matchMedia("(prefers-color-scheme: dark)")
-      .matches
-      ? "dark"
-      : "light";
-    const initialTheme = savedTheme || systemTheme;
-
-    setTheme(initialTheme);
-    document.documentElement.classList.toggle("dark", initialTheme === "dark");
+    // Force dark mode only - ignore localStorage and system preference
+    setTheme("dark");
+    document.documentElement.classList.add("dark");
+    localStorage.setItem("theme", "dark");
   }, []);
 
   const toggleTheme = () => {
-    const newTheme = theme === "light" ? "dark" : "light";
-    setTheme(newTheme);
-    localStorage.setItem("theme", newTheme);
-    document.documentElement.classList.toggle("dark", newTheme === "dark");
+    // Disable theme toggling - always stay in dark mode
+    // Comment this out if you want to completely disable toggling
+    // const newTheme = theme === "light" ? "dark" : "light";
+    // setTheme(newTheme);
+    // localStorage.setItem("theme", newTheme);
+    // document.documentElement.classList.toggle("dark", newTheme === "dark");
   };
 
   return (

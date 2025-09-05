@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { Award, Home, Target, User } from "lucide-react";
+import { Award, Bug, Home, Target, User } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import React from "react";
@@ -17,19 +17,36 @@ const navItems: NavItem[] = [
   { href: "/missions", label: "Missions", icon: Target },
   { href: "/nft", label: "NFTs", icon: Award },
   { href: "/profile", label: "Profile", icon: User },
+  ...(process.env.NODE_ENV === "development"
+    ? [{ href: "/debug", label: "Debug", icon: Bug }]
+    : []),
 ];
 
 const NavBar: React.FC = () => {
   const pathname = usePathname();
 
+  // Function to determine if an item should be active
+  const isItemActive = (itemHref: string) => {
+    if (itemHref === "/missions") {
+      // Missions tab is active for /missions and all location-related pages
+      return (
+        pathname === "/missions" ||
+        pathname === "/add-location" ||
+        pathname === "/my-locations" ||
+        pathname.startsWith("/location")
+      );
+    }
+    return pathname === itemHref;
+  };
+
   return (
     <>
       {/* Desktop Navigation - Top */}
-      <nav className="hidden md:flex bg-card border-b border-border">
+      <nav className="hidden md:flex bg-card max-w-xl bg-dark-bg/60 backdrop-blur-2xl border border-primary-800/20 rounded-2xl mx-auto shadow-lg">
         <div className="container mx-auto px-4">
-          <div className="flex items-center space-x-8 h-16">
+          <div className="flex items-center justify-between space-x-8 h-16">
             {navItems.map((item) => {
-              const isActive = pathname === item.href;
+              const isActive = isItemActive(item.href);
               return (
                 <Link
                   key={item.href}
@@ -54,7 +71,7 @@ const NavBar: React.FC = () => {
       <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-card border-t border-border z-50">
         <div className="grid grid-cols-4 h-16">
           {navItems.map((item) => {
-            const isActive = pathname === item.href;
+            const isActive = isItemActive(item.href);
             return (
               <Link
                 key={item.href}
