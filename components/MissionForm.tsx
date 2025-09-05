@@ -7,8 +7,17 @@ import { useAuth } from "@/hooks/useAuth";
 import { MissionService } from "@/lib/firebase/services/missions";
 import { UploadedFile } from "@/lib/upload/api";
 import { MissionLevel, MissionStatus } from "@/types/firebase";
-import { Loader } from "@googlemaps/js-api-loader";
-import { Calendar, Clock, DollarSign, MapPin, Save, Users } from "lucide-react";
+import { Loader as GoogleMapsLoader } from "@googlemaps/js-api-loader";
+import { Timestamp } from "firebase/firestore";
+import {
+  Calendar,
+  Clock,
+  DollarSign,
+  Loader,
+  MapPin,
+  Save,
+  Users,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -59,7 +68,7 @@ const MissionForm: React.FC = () => {
   // Initialize Google Maps
   const initMap = async () => {
     try {
-      const loader = new Loader({
+      const loader = new GoogleMapsLoader({
         apiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || "demo_key",
         version: "weekly",
         libraries: ["places"],
@@ -70,7 +79,10 @@ const MissionForm: React.FC = () => {
       const mapElement = document.getElementById("mission-map");
       if (mapElement) {
         const mapInstance = new google.maps.Map(mapElement, {
-          center: formData.position,
+          center: {
+            lat: formData.position.latitude,
+            lng: formData.position.longitude,
+          },
           zoom: 13,
           styles: [
             {
@@ -92,7 +104,10 @@ const MissionForm: React.FC = () => {
 
         // Add initial marker
         const initialMarker = new google.maps.Marker({
-          position: formData.position,
+          position: {
+            lat: formData.position.latitude,
+            lng: formData.position.longitude,
+          },
           map: mapInstance,
           title: "Mission location",
           draggable: true,
@@ -186,7 +201,7 @@ const MissionForm: React.FC = () => {
         picture: formData.picture,
         address: formData.address,
         position: formData.position,
-        deadline: deadline,
+        deadline: Timestamp.fromDate(deadline),
         duration: formData.duration,
         level: formData.level,
         status: MissionStatus.PENDING,

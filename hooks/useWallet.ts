@@ -27,7 +27,6 @@ export const useWallet = () => {
 
                     await UserService.updateUser(user.uid, {
                         walletAddress: address,
-                        updatedAt: new Date(),
                     });
 
                     console.log('✅ Wallet address updated successfully');
@@ -54,8 +53,7 @@ export const useWallet = () => {
             // Supprimer l'adresse wallet de Firestore
             if (user) {
                 await UserService.updateUser(user.uid, {
-                    walletAddress: null,
-                    updatedAt: new Date(),
+                    walletAddress: undefined,
                 });
 
                 console.log('✅ Wallet disconnected and removed from Firestore');

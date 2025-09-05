@@ -70,9 +70,9 @@ const UserSettingsModal: React.FC<UserSettingsModalProps> = ({
       // Update user data in Firestore
       await UserService.updateUser(user.uid, {
         name: formData.name,
-        phone: formData.phone || null,
-        gender: (formData.gender as UserGender) || null,
-        profileImage: formData.profileImage || null,
+        phone: formData.phone || undefined,
+        gender: (formData.gender as UserGender) || undefined,
+        profileImage: formData.profileImage || undefined,
       });
 
       // Update Firebase Auth profile if needed
@@ -108,7 +108,7 @@ const UserSettingsModal: React.FC<UserSettingsModalProps> = ({
 
   // Handle modal close
   const handleClose = () => {
-    if (loading || uploadingImage) return;
+    if (loading) return;
 
     // Reset form to original values
     setFormData({
@@ -134,7 +134,7 @@ const UserSettingsModal: React.FC<UserSettingsModalProps> = ({
           </h2>
           <button
             onClick={handleClose}
-            disabled={loading || uploadingImage}
+            disabled={loading}
             className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 disabled:opacity-50"
           >
             <X className="h-6 w-6" />
@@ -260,14 +260,14 @@ const UserSettingsModal: React.FC<UserSettingsModalProps> = ({
                 type="button"
                 variant="outline"
                 onClick={handleClose}
-                disabled={loading || uploadingImage}
+                disabled={loading}
                 className="flex-1"
               >
                 Cancel
               </Button>
               <Button
                 type="submit"
-                disabled={loading || uploadingImage}
+                disabled={loading}
                 className="flex-1 flex items-center justify-center space-x-2"
               >
                 {loading ? (

@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { useAuth } from "@/hooks/useAuth";
 import { db } from "@/lib/firebase/config";
 import { UserService } from "@/lib/firebase/services/users";
+import { UserStatus } from "@/types/firebase";
 import { AlertCircle, CheckCircle, Info, RefreshCw } from "lucide-react";
 import { useEffect, useState } from "react";
 
@@ -57,7 +58,8 @@ const DebugPage: React.FC = () => {
       // Test Firestore connection
       let firestoreConnection = false;
       try {
-        await db._delegate._databaseId;
+        // Test Firestore connection by trying to access the app
+        await db.app;
         firestoreConnection = true;
         console.log("✅ Firestore connection successful");
       } catch (err) {
@@ -113,18 +115,18 @@ const DebugPage: React.FC = () => {
         name: user.displayName || "Test User",
         email: user.email || "",
         profileImage: user.photoURL || undefined,
-        phone: null,
-        gender: null,
-        walletAddress: null,
-        ensName: null,
-        status: "ACTIVE" as const,
+        phone: undefined,
+        gender: undefined,
+        walletAddress: undefined,
+        ensName: undefined,
+        status: UserStatus.ACTIVE,
         totalMissionsCompleted: 0,
         totalRewardsEarned: 0,
         level: 1,
         badges: [],
       };
 
-      await UserService.createUser(user.uid, newUserData);
+      await UserService.createUser(newUserData);
       console.log("✅ User created/updated successfully");
 
       // Refresh diagnostics
@@ -206,7 +208,7 @@ const DebugPage: React.FC = () => {
                       value === "✅ Present" ? "text-green-600" : "text-red-600"
                     }
                   >
-                    {value}
+                    {String(value)}
                   </span>
                 </div>
               ))}
