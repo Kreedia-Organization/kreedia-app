@@ -61,7 +61,7 @@ export const useFirestore = <T extends DocumentData>(
                     const documents = snapshot.docs.map(doc => ({
                         id: doc.id,
                         ...doc.data()
-                    })) as T[];
+                    })) as unknown as T[];
 
                     setData(documents);
                     setLoading(false);
@@ -130,7 +130,7 @@ export const useFirestoreDoc = <T extends DocumentData>(
                         setDocument({
                             id: doc.id,
                             ...doc.data()
-                        } as T);
+                        } as unknown as T);
                     } else {
                         setDocument(null);
                     }

@@ -1,197 +1,223 @@
 # 🌱 Kreedia - Clean the Environment, Earn Crypto
 
-Une application complète Next.js 14 qui transforme les actions environnementales en récompenses crypto et NFTs.
+A complete Next.js 14 application that transforms environmental actions into crypto rewards and NFTs.
 
 ![Kreedia Logo](public/logo_green.png)
 
-## ✨ Fonctionnalités
+## ✨ Features
 
-### 🔐 Authentification
+### 🔐 Authentication
 
-- **Connexion Google OAuth** via NextAuth.js
-- **Protection des routes** avec redirection automatique
-- **Gestion de session** persistante
+- **Google OAuth Login** via Firebase Auth
+- **Route protection** with automatic redirection
+- **Persistent session** management
 
-### 📊 Dashboard Complet
+### 📊 Complete Dashboard
 
-- **Balance crypto** avec progression hebdomadaire
-- **Statistiques d'impact** (missions, zones nettoyées, photos)
-- **Graphique de progression** des gains avec Recharts
-- **Missions en cours** et disponibles
-- **Actions rapides** pour navigation facile
+- **Crypto balance** with weekly progression
+- **Impact statistics** (missions, cleaned areas, photos)
+- **Progress chart** of earnings with Recharts
+- **Ongoing and available** missions
+- **Quick actions** for easy navigation
 
-### 🎯 Système de Missions
+### 🎯 Mission System
 
-- **Filtrage avancé** par difficulté et localisation
-- **Recherche** par nom, description ou lieu
-- **Statuts multiples** : Disponible, En cours, Terminé
-- **Récompenses crypto** et NFTs
-- **Vue responsive** grille/liste
+- **Advanced filtering** by difficulty and location
+- **Search** by name, description or place
+- **Multiple statuses**: Available, In Progress, Completed
+- **Crypto rewards** and NFTs
+- **Responsive view** grid/list
 
-### 🏆 Collection NFT
+### 🏆 NFT Collection
 
-- **Galerie responsive** avec vues grille et liste
-- **Filtrage par rareté** (Commun à Légendaire)
-- **Tri** par date, rareté ou nom
-- **Statistiques détaillées** par type de rareté
-- **Métadonnées complètes** (lieu, date, description)
+- **Responsive gallery** with grid and list views
+- **Rarity filtering** (Common to Legendary)
+- **Sorting** by date, rarity or name
+- **Detailed statistics** by rarity type
+- **Complete metadata** (location, date, description)
 
-### 👤 Profil Utilisateur
+### 👤 User Profile
 
-- **Statistiques d'impact** environnemental
-- **Système d'achievements** avec progression
-- **Historique d'activité** détaillé
-- **Gestion de compte** et déconnexion
+- **Environmental impact** statistics
+- **Achievement system** with progression
+- **Detailed activity** history
+- **Account management** and logout
 
 ### 🎨 Design & UX
 
-- **Responsive mobile-first** avec navigation adaptative
-- **Mode sombre/clair** avec persistance localStorage
-- **Animations fluides** et transitions
-- **Charte graphique verte** (#22c55e) cohérente
-- **Composants réutilisables** avec Tailwind CSS
+- **Mobile-first responsive** with adaptive navigation
+- **Dark/light mode** with localStorage persistence
+- **Smooth animations** and transitions
+- **Consistent green** color scheme (#22c55e)
+- **Reusable components** with Tailwind CSS
 
-### 🔔 Système de Notifications
+### 🔔 Notification System
 
-- **Notifications temps réel** avec badge de compteur
-- **Types multiples** : succès, info, warning, erreur
-- **Actions contextuelles** (marquer lu, supprimer)
-- **Timestamps** relatifs intelligents
+- **Real-time notifications** with counter badge
+- **Multiple types**: success, info, warning, error
+- **Contextual actions** (mark as read, delete)
+- **Smart relative** timestamps
 
 ## 🚀 Technologies
 
-- **Framework** : Next.js 14 avec App Router
-- **Styling** : Tailwind CSS + composants personnalisés
-- **Authentification** : NextAuth.js + Google Provider
-- **Charts** : Recharts pour visualisations
-- **Icons** : Lucide React (1000+ icônes)
-- **TypeScript** : Sécurité de type complète
-- **Responsive** : Mobile-first design
+- **Framework**: Next.js 14 with App Router
+- **Styling**: Tailwind CSS + custom components
+- **Authentication**: Firebase Auth + Google Provider
+- **Database**: Firestore (NoSQL)
+- **Charts**: Recharts for visualizations
+- **Icons**: Lucide React (1000+ icons)
+- **TypeScript**: Complete type safety
+- **Responsive**: Mobile-first design
+- **Web3**: RainbowKit + Wagmi for wallet connection
 
-## 📱 Navigation Responsive
+## 📱 Responsive Navigation
 
 ### Mobile (< 768px)
 
-- **Bottom navigation** avec 4 onglets principaux
-- **Touch-friendly** boutons larges
-- **Indicateur actif** visuel
-- **Layout vertical** optimisé
+- **Bottom navigation** with 4 main tabs
+- **Touch-friendly** large buttons
+- **Visual active** indicator
+- **Optimized vertical** layout
 
 ### Desktop (≥ 768px)
 
-- **Top navigation** horizontale
-- **Sidebar** potentielle pour extensions
-- **Layout en grille** adaptatif
-- **Hover effects** riches
+- **Top navigation** horizontal
+- **Potential sidebar** for extensions
+- **Adaptive grid** layout
+- **Rich hover** effects
 
 ## 🎯 Architecture
 
 ```
 app/
-├── (dashboard)/              # Groupe de routes protégées
-│   ├── layout.tsx           # Layout avec Header + NavBar
-│   ├── dashboard/page.tsx   # Page principale
-│   ├── missions/page.tsx    # Gestion des missions
-│   ├── nft/page.tsx         # Collection NFT
-│   └── profile/page.tsx     # Profil utilisateur
-├── auth/signin/page.tsx     # Page de connexion
-└── api/auth/               # Routes NextAuth.js
+├── (dashboard)/              # Protected route group
+│   ├── layout.tsx           # Layout with Header + NavBar
+│   ├── dashboard/page.tsx   # Main page
+│   ├── missions/page.tsx    # Mission management
+│   ├── nft/page.tsx         # NFT collection
+│   ├── profile/page.tsx     # User profile
+│   └── settings/page.tsx    # User settings
+├── auth/signin/page.tsx     # Login page
+└── api/                     # API routes
 
 components/
-├── ui/                     # Composants UI de base
-│   ├── Button.tsx         # Bouton avec variants
-│   ├── Card.tsx           # Composant carte
-│   └── Badge.tsx          # Badges colorés
-├── Header.tsx             # En-tête avec notifications
-├── NavBar.tsx             # Navigation responsive
-├── BalanceCard.tsx        # Affichage balance crypto
-├── MissionCard.tsx        # Carte mission
-├── NFTCard.tsx            # Carte NFT
-├── WeeklyStats.tsx        # Statistiques hebdomadaires
-├── ProgressChart.tsx      # Graphique progression
-└── NotificationSystem.tsx # Système notifications
+├── ui/                     # Base UI components
+│   ├── Button.tsx         # Button with variants
+│   ├── Card.tsx           # Card component
+│   ├── Badge.tsx          # Colored badges
+│   ├── ImageUpload.tsx    # Image upload component
+│   └── MultiFileUpload.tsx # Multiple file upload
+├── Header.tsx             # Header with notifications
+├── NavBar.tsx             # Responsive navigation
+├── CryptoBalanceCard.tsx  # Crypto balance display
+├── MissionCard.tsx        # Mission card
+├── NFTCard.tsx            # NFT card
+├── WeeklyStats.tsx        # Weekly statistics
+├── ProgressChart.tsx      # Progress chart
+└── NotificationSystem.tsx # Notification system
 
 lib/
-├── auth.ts               # Configuration NextAuth
-├── data.ts               # Données mockées
-├── providers.tsx         # Providers React
-├── theme-provider.tsx    # Provider mode sombre
-└── utils.ts              # Utilitaires
+├── firebase/              # Firebase configuration
+│   ├── config.ts         # Firebase config
+│   ├── auth.ts           # Firebase Auth
+│   └── services/         # Firestore services
+├── upload/               # File upload API
+│   └── api.ts           # Upload service
+├── providers.tsx         # React providers
+├── theme-provider.tsx    # Dark mode provider
+└── utils.ts              # Utilities
+
+hooks/
+├── useAuth.ts           # Authentication hook
+├── useMissions.ts       # Missions hook
+├── useWallet.ts         # Wallet connection hook
+└── useFileUpload.ts     # File upload hook
 ```
 
-## 📊 Données & État
+## 📊 Data & State
 
-### Mock Data Incluses
+### Firebase Integration
 
-- **12 missions** variées avec différents statuts
-- **6 NFTs** avec raretés diverses
-- **Statistiques utilisateur** réalistes
-- **Notifications** d'exemple
-- **Activité** récente simulée
+- **Firestore Database** for real-time data
+- **Firebase Auth** for user authentication
+- **Cloud Storage** for file uploads
+- **Real-time listeners** for live updates
+- **Offline support** with caching
 
-### Gestion d'État
+### State Management
 
-- **State local** pour UI (filtres, recherche)
-- **NextAuth session** pour authentification
-- **localStorage** pour préférences thème
-- **Props drilling** minimal avec composition
+- **Local state** for UI (filters, search)
+- **Firebase Auth** for authentication
+- **localStorage** for theme preferences
+- **Custom hooks** for data fetching
+- **Minimal props drilling** with composition
 
-## 🎨 Thème & Design
+## 🎨 Theme & Design
 
-### Palette de Couleurs
+### Color Palette
 
-- **Primary** : #22c55e (vert éco-friendly)
-- **Backgrounds** : Blanc/Gris foncé adaptatifs
-- **Text** : Contrastes optimaux pour accessibilité
-- **Borders** : Subtils et cohérents
+- **Primary**: #22c55e (eco-friendly green)
+- **Backgrounds**: White/Dark gray adaptive
+- **Text**: Optimal contrasts for accessibility
+- **Borders**: Subtle and consistent
 
-### Composants Stylisés
+### Styled Components
 
-- **Cards** avec hover effects et ombres
-- **Buttons** multiples variants (primary, outline, ghost)
-- **Badges** colorés par contexte
-- **Forms** avec focus states
-- **Loading** spinners cohérents
+- **Cards** with hover effects and shadows
+- **Buttons** multiple variants (primary, outline, ghost)
+- **Badges** colored by context
+- **Forms** with focus states
+- **Loading** spinners consistent
 
-## 🔧 Configuration Simplifiée
+## 🔧 Simplified Configuration
 
-1. **Cloner le projet**
-2. **Installer les dépendances** : `npm install`
-3. **Créer .env.local** (voir ENV-SETUP.md)
-4. **Lancer** : `npm run dev`
-5. **Profiter** : Connexion automatique sans configuration ! 🎉
+1. **Clone the project**
+2. **Install dependencies**: `npm install`
+3. **Create .env.local** (see ENV-SETUP.md)
+4. **Run**: `npm run dev`
+5. **Enjoy**: Automatic connection without configuration! 🎉
 
-### 🎭 Mode Démo Frontend-Only
+### 🎭 Firebase Integration
 
-L'application fonctionne **sans backend** grâce à :
+The application works with **real backend** thanks to:
 
-- **Authentification simulée** avec NextAuth + CredentialsProvider
-- **Données mockées** réalistes pour la démonstration
-- **Connexion automatique** en un clic
-- **Déconnexion fonctionnelle** avec redirection
+- **Firebase Authentication** with Google OAuth
+- **Firestore Database** for real-time data
+- **Cloud Storage** for file uploads
+- **Real-time updates** and synchronization
+- **Web3 integration** with RainbowKit
 
-## 🌟 Points Forts
+## 🌟 Key Features
 
-- ✅ **Code production-ready** avec TypeScript
-- ✅ **Design cohérent** et professionnel
-- ✅ **Performance optimisée** Next.js 14
-- ✅ **Sécurité** authentication OAuth
-- ✅ **Accessibilité** WCAG guidelines
-- ✅ **Responsive** tous devices
-- ✅ **Extensible** architecture modulaire
-- ✅ **Maintenable** code organisé et documenté
+- ✅ **Production-ready code** with TypeScript
+- ✅ **Consistent and professional** design
+- ✅ **Optimized performance** Next.js 14
+- ✅ **Security** OAuth authentication
+- ✅ **Accessibility** WCAG guidelines
+- ✅ **Responsive** all devices
+- ✅ **Extensible** modular architecture
+- ✅ **Maintainable** organized and documented code
+- ✅ **Web3 ready** wallet integration
+- ✅ **Real-time data** with Firebase
 
-## 🚀 Déploiement
+## 🚀 Deployment
 
-Application prête pour déploiement sur :
+Application ready for deployment on:
 
-- **Vercel** (recommandé)
+- **Vercel** (recommended)
 - **Netlify**
 - **AWS Amplify**
 - **Railway**
 
-Toutes les dépendances sont compatibles serverless.
+All dependencies are serverless compatible.
+
+## 📚 Documentation
+
+- **Environment Setup**: See `ENV-SETUP.md`
+- **Firebase Configuration**: See `FIREBASE-SETUP.md`
+- **Upload API**: See `UPLOAD-API-SETUP.md`
+- **Google Maps**: See `ENV-GOOGLE-MAPS.md`
 
 ---
 
-_Construit avec ❤️ et 🌱 pour un avenir plus vert_
+_Built with ❤️ and 🌱 for a greener future_

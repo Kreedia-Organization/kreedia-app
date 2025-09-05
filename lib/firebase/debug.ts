@@ -55,7 +55,7 @@ export const getFirebaseDebugInfo = async (): Promise<FirebaseDebugInfo> => {
     // Test Firestore
     try {
         // Simple test to check if Firestore is accessible
-        const testDoc = db.collection ? true : !!db._delegate;
+        const testDoc = !!db.app;
         debugInfo.firestoreStatus.isConnected = testDoc;
     } catch (error) {
         debugInfo.firestoreStatus.isConnected = false;

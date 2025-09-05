@@ -104,13 +104,8 @@ const NavBar: React.FC = () => {
   const isItemActive = useCallback(
     (itemHref: string) => {
       if (itemHref === "/missions") {
-        // Missions tab is active for /missions and all location-related pages
-        return (
-          pathname === "/missions" ||
-          pathname === "/add-location" ||
-          pathname === "/my-locations" ||
-          pathname.startsWith("/location")
-        );
+        // Missions tab is active for /missions and mission-related pages
+        return pathname === "/missions" || pathname.startsWith("/missions/");
       }
       return pathname === itemHref;
     },

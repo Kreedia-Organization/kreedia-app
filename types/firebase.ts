@@ -118,34 +118,6 @@ export interface MissionUser extends FirestoreDocument {
     feedback?: string;
 }
 
-// Location submission status enum
-export enum LocationStatus {
-    PENDING = 'PENDING',
-    APPROVED = 'APPROVED',
-    REJECTED = 'REJECTED'
-}
-
-// Location submission document interface
-export interface LocationSubmission extends FirestoreDocument {
-    userId: string; // Reference to User ID
-    name: string;
-    description?: string;
-    image: string;
-    position: GeoPoint;
-    address: string;
-    neighborhood: string;
-    status: LocationStatus;
-    submittedAt: Timestamp;
-    reviewedAt?: Timestamp;
-    reviewedBy?: string; // Reference to Admin User ID
-    rejectionReason?: string;
-    canWork: boolean; // User can work at this location
-    // Additional metadata
-    category?: string;
-    estimatedCleanupTime?: number;
-    difficultyLevel?: MissionLevel;
-    priority?: number;
-}
 
 // NFT document interface
 export interface NFT extends FirestoreDocument {
@@ -249,7 +221,6 @@ export const COLLECTIONS = {
     USERS: 'users',
     MISSIONS: 'missions',
     MISSION_USERS: 'mission_users',
-    LOCATION_SUBMISSIONS: 'location_submissions',
     NFTS: 'nfts',
     TRANSACTIONS: 'transactions',
     USER_STATS: 'user_stats',
@@ -267,8 +238,6 @@ export type UpdateMissionData = Partial<CreateMissionData>;
 export type CreateMissionUserData = Omit<MissionUser, 'id' | 'createdAt' | 'updatedAt'>;
 export type UpdateMissionUserData = Partial<CreateMissionUserData>;
 
-export type CreateLocationSubmissionData = Omit<LocationSubmission, 'id' | 'createdAt' | 'updatedAt'>;
-export type UpdateLocationSubmissionData = Partial<CreateLocationSubmissionData>;
 
 export type CreateNotificationData = Omit<Notification, 'id' | 'createdAt' | 'updatedAt'>;
 export type UpdateNotificationData = Partial<CreateNotificationData>;
