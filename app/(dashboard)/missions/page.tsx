@@ -1,13 +1,19 @@
 "use client";
 
-import MissionCard from "@/components/MissionCard";
+import MissionCard, {
+  Mission as MissionCardType,
+} from "@/components/MissionCard";
 import { Badge } from "@/components/ui/Badge";
 import Button from "@/components/ui/Button";
 import { Card, CardContent } from "@/components/ui/Card";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserLocationSubmissions } from "@/hooks/useLocationSubmissions";
 import { useMissions } from "@/hooks/useMissions";
-import { MissionLevel, MissionStatus } from "@/types/firebase";
+import {
+  Mission as FirebaseMission,
+  MissionLevel,
+  MissionStatus,
+} from "@/types/firebase";
 import {
   Award,
   Calendar,
@@ -110,6 +116,54 @@ const MissionsPage: React.FC = () => {
       day: "numeric",
       year: "numeric",
     }).format(date);
+  };
+
+  // Transform Firebase Mission to MissionCard format
+  const transformMission = (
+    firebaseMission: FirebaseMission
+  ): MissionCardType => {
+    const getDifficultyLabel = (
+      level: MissionLevel
+    ): "Easy" | "Medium" | "Hard" => {
+      switch (level) {
+        case MissionLevel.EASY:
+          return "Easy";
+        case MissionLevel.MEDIUM:
+          return "Medium";
+        case MissionLevel.HIGH:
+          return "Hard";
+        default:
+          return "Easy";
+      }
+    };
+
+    const getStatusLabel = (
+      status: MissionStatus
+    ): "Available" | "In Progress" | "Completed" => {
+      switch (status) {
+        case MissionStatus.ACTIVE:
+          return "Available";
+        case MissionStatus.PENDING:
+        case MissionStatus.VERIFIED:
+          return "In Progress";
+        case MissionStatus.COMPLETED:
+          return "Completed";
+        default:
+          return "Available";
+      }
+    };
+
+    return {
+      id: firebaseMission.id,
+      title: firebaseMission.name,
+      description: firebaseMission.description,
+      location: firebaseMission.address,
+      reward: firebaseMission.amount,
+      difficulty: getDifficultyLabel(firebaseMission.level),
+      estimatedTime: `${firebaseMission.duration}h`,
+      status: getStatusLabel(firebaseMission.status),
+      nftReward: false, // Default to false, can be enhanced later
+    };
   };
 
   const tabs = [
@@ -488,7 +542,7 @@ const MissionsPage: React.FC = () => {
               {filteredMissions.map((mission) => (
                 <MissionCard
                   key={mission.id}
-                  mission={mission}
+                  mission={transformMission(mission)}
                   onStart={
                     activeTab === "available" ? handleStartMission : undefined
                   }

@@ -6,15 +6,19 @@ import ImageUpload from "@/components/ui/ImageUpload";
 import { useAuth } from "@/hooks/useAuth";
 import { CloudinaryUploadResult } from "@/lib/cloudinary/upload";
 import { LocationSubmissionService } from "@/lib/firebase/services/locationSubmissions";
+import { LocationStatus } from "@/types/firebase";
 import { Loader } from "@googlemaps/js-api-loader";
-import { CheckCircle, MapPin } from "lucide-react";
+import { GeoPoint, Timestamp } from "firebase/firestore";
+import { Camera, CheckCircle, MapPin } from "lucide-react";
 import { useRouter } from "next/navigation";
 import React, { useEffect, useRef, useState } from "react";
 
-// Déclarations de types pour éviter l'erreur "cannot find namespace 'google'"
-type GoogleMapsNamespace = typeof window & {
-  google: typeof google;
-};
+// Déclarations de types pour Google Maps
+declare global {
+  interface Window {
+    google: any;
+  }
+}
 
 type MapType = any;
 type MarkerType = any;
@@ -169,16 +173,15 @@ const AddLocationPage: React.FC = () => {
         name: formData.neighborhood,
         description: `Emplacement proposé dans le quartier ${formData.neighborhood}`,
         image: formData.imageUrl,
-        position: {
-          latitude: formData.location.lat,
-          longitude: formData.location.lng,
-        },
+        position: new GeoPoint(formData.location.lat, formData.location.lng),
         address: formData.fullAddress,
         neighborhood: formData.neighborhood,
         canWork: formData.canWork,
         category: "cleanup",
         priority: 1,
-      };
+        status: LocationStatus.PENDING,
+        submittedAt: Timestamp.now(),
+      } as const;
 
       await LocationSubmissionService.submitLocation(locationData);
       setIsSubmitted(true);
@@ -371,7 +374,7 @@ const AddLocationPage: React.FC = () => {
             type="submit"
             disabled={
               isLoading ||
-              !formData.image ||
+              !formData.imageUrl ||
               !formData.location ||
               !formData.canWork
             }

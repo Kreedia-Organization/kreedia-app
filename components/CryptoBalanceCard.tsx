@@ -32,7 +32,10 @@ const CryptoBalanceCard: React.FC<CryptoBalanceCardProps> = ({
               onError={(e) => {
                 // Fallback si l'image ne charge pas
                 e.currentTarget.style.display = "none";
-                e.currentTarget.nextElementSibling!.style.display = "flex";
+                const fallbackElement = e.currentTarget.nextElementSibling;
+                if (fallbackElement && "style" in fallbackElement) {
+                  (fallbackElement as HTMLElement).style.display = "flex";
+                }
               }}
             />
             <div
