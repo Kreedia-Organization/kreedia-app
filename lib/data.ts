@@ -1,7 +1,19 @@
-import { Mission } from '@/components/MissionCard';
 import { NFT } from '@/components/NFTCard';
 
-export const mockMissions: Mission[] = [
+// Type pour les données mock (différent du type Mission de l'API)
+interface MockMission {
+    id: string;
+    title: string;
+    description: string;
+    location: string;
+    reward: number;
+    difficulty: string;
+    estimatedTime: string;
+    status: string;
+    nftReward: boolean;
+}
+
+export const mockMissions: MockMission[] = [
     {
         id: '1',
         title: 'Clean Central Park',

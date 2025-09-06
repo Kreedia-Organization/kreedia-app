@@ -21,7 +21,7 @@ export const useWalletCheck = (): UseWalletCheckReturn => {
         if (user) {
             const hasWallet = user.wallet_address && user.wallet_address !== null;
             setNeedsWalletConnection(!hasWallet);
-            setWalletAddress(user.wallet_address);
+            setWalletAddress(user.wallet_address || null);
         } else {
             setNeedsWalletConnection(false);
             setWalletAddress(null);
