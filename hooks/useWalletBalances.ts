@@ -1,6 +1,8 @@
 "use client";
 
+import { useUserNFTs, useWorkerEarnings } from "@/hooks/useBlockchainData";
 import { useWallet } from "@/hooks/useWallet";
+import { BLOCKCHAIN_CONFIG } from "@/lib/api/config";
 import { useEffect, useState } from "react";
 
 interface TokenBalance {
@@ -22,15 +24,11 @@ interface WalletBalances {
     error: string | null;
 }
 
-// Token contract addresses (mainnet)
-const TOKEN_CONTRACTS = {
-    USDC: "0xA0b86a33E6441b8C4C8C0C4C8C0C4C8C0C4C8C0C", // Replace with actual USDC contract
-    USDT: "0xdAC17F958D2ee523a2206206994597C13D831ec7", // Replace with actual USDT contract
-    DAI: "0x6B175474E89094C44Da98b954EedeAC495271d0F", // Replace with actual DAI contract
-};
-
 export const useWalletBalances = (): WalletBalances => {
     const { address, isConnected } = useWallet();
+    const { earnings, loading: earningsLoading, error: earningsError } = useWorkerEarnings();
+    const { totalNFTs, loading: nftLoading, error: nftError } = useUserNFTs();
+
     const [balances, setBalances] = useState<WalletBalances>({
         USDC: null,
         USDT: null,
@@ -41,7 +39,7 @@ export const useWalletBalances = (): WalletBalances => {
     });
 
     useEffect(() => {
-        const fetchBalances = async () => {
+        const updateBalances = () => {
             if (!address || !isConnected) {
                 setBalances({
                     USDC: null,
@@ -54,52 +52,48 @@ export const useWalletBalances = (): WalletBalances => {
                 return;
             }
 
-            setBalances(prev => ({ ...prev, loading: true, error: null }));
+            const loading = earningsLoading || nftLoading;
+            const error = earningsError || nftError;
 
-            try {
-                // Mock balances for now - replace with actual blockchain calls
-                const mockBalances: WalletBalances = {
-                    USDC: {
-                        symbol: "USDC",
-                        balance: "1250.50",
-                        decimals: 6,
-                        contractAddress: TOKEN_CONTRACTS.USDC,
-                    },
-                    USDT: {
-                        symbol: "USDT",
-                        balance: "890.25",
-                        decimals: 6,
-                        contractAddress: TOKEN_CONTRACTS.USDT,
-                    },
-                    DAI: {
-                        symbol: "DAI",
-                        balance: "2100.75",
-                        decimals: 18,
-                        contractAddress: TOKEN_CONTRACTS.DAI,
-                    },
-                    NFT: {
-                        count: 12,
-                        collections: ["Kreedia Impact", "Eco Warriors", "Green Heroes"],
-                    },
-                    loading: false,
-                    error: null,
-                };
+            setBalances({
+                USDC: {
+                    symbol: "USDC",
+                    balance: earnings.USDC,
+                    decimals: 6,
+                    contractAddress: BLOCKCHAIN_CONFIG.TOKEN_ADDRESSES.USDC,
+                },
+                USDT: {
+                    symbol: "USDT",
+                    balance: earnings.USDT,
+                    decimals: 6,
+                    contractAddress: BLOCKCHAIN_CONFIG.TOKEN_ADDRESSES.USDT,
+                },
+                DAI: {
+                    symbol: "DAI",
+                    balance: earnings.DAI,
+                    decimals: 18,
+                    contractAddress: BLOCKCHAIN_CONFIG.TOKEN_ADDRESSES.DAI,
+                },
+                NFT: {
+                    count: totalNFTs,
+                    collections: ["Kreedia Impact"],
+                },
+                loading,
+                error,
+            });
 
-                setBalances(mockBalances);
-                console.log("✅ Wallet balances loaded:", mockBalances);
-
-            } catch (error: any) {
-                console.error("❌ Error fetching wallet balances:", error);
-                setBalances(prev => ({
-                    ...prev,
-                    loading: false,
-                    error: error.message || "Failed to fetch balances",
-                }));
+            if (!loading && !error) {
+                console.log("✅ Wallet balances updated from blockchain:", {
+                    USDC: earnings.USDC,
+                    USDT: earnings.USDT,
+                    DAI: earnings.DAI,
+                    totalNFTs,
+                });
             }
         };
 
-        fetchBalances();
-    }, [address, isConnected]);
+        updateBalances();
+    }, [address, isConnected, earnings, totalNFTs, earningsLoading, nftLoading, earningsError, nftError]);
 
     return balances;
 };

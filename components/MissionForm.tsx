@@ -2,460 +2,326 @@
 
 import Button from "@/components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
-import ImageUpload from "@/components/ui/ImageUpload";
-import { useAuth } from "@/hooks/useAuth";
-import { MissionService } from "@/lib/firebase/services/missions";
-import { UploadedFile } from "@/lib/upload/api";
-import { MissionLevel, MissionStatus } from "@/types/firebase";
-import { Loader as GoogleMapsLoader } from "@googlemaps/js-api-loader";
-import { Timestamp } from "firebase/firestore";
+import { useApiAuth } from "@/hooks/useApiAuth";
 import {
-  Calendar,
-  Clock,
-  DollarSign,
-  Loader,
-  MapPin,
-  Save,
-  Users,
-} from "lucide-react";
+  faImage,
+  faMapMarkerAlt,
+  faTrash,
+  faUpload,
+} from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import React, { useRef, useState } from "react";
+import GoogleMapSelector from "./GoogleMapSelector";
 
 interface MissionFormData {
-  name: string;
-  description: string;
-  picture: string;
-  address: string;
-  position: {
+  pictures: string[];
+  location: {
     latitude: number;
     longitude: number;
   };
-  deadline: string;
-  duration: number;
-  level: MissionLevel;
-  amount: number;
-  maxParticipants: number;
-  requirements: string[];
-  tags: string[];
+  address: string;
 }
 
 const MissionForm: React.FC = () => {
   const router = useRouter();
-  const { user } = useAuth();
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [map, setMap] = useState<google.maps.Map | null>(null);
-  const [marker, setMarker] = useState<google.maps.Marker | null>(null);
-  const [uploadError, setUploadError] = useState<string>("");
+  const { user } = useApiAuth();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [formData, setFormData] = useState<MissionFormData>({
-    name: "",
-    description: "",
-    picture: "",
+    pictures: [],
+    location: { latitude: 0, longitude: 0 },
     address: "",
-    position: {
-      latitude: 48.8566, // Paris by default
-      longitude: 2.3522,
-    },
-    deadline: "",
-    duration: 2,
-    level: MissionLevel.MEDIUM,
-    amount: 0.1,
-    maxParticipants: 10,
-    requirements: [],
-    tags: [],
   });
 
-  // Initialize Google Maps
-  const initMap = async () => {
-    try {
-      const loader = new GoogleMapsLoader({
-        apiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || "demo_key",
-        version: "weekly",
-        libraries: ["places"],
-      });
+  const [uploadedImages, setUploadedImages] = useState<string[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
 
-      await loader.load();
-
-      const mapElement = document.getElementById("mission-map");
-      if (mapElement) {
-        const mapInstance = new google.maps.Map(mapElement, {
-          center: {
-            lat: formData.position.latitude,
-            lng: formData.position.longitude,
-          },
-          zoom: 13,
-          styles: [
-            {
-              elementType: "geometry",
-              stylers: [{ color: "#1f2937" }],
-            },
-            {
-              elementType: "labels.text.stroke",
-              stylers: [{ color: "#1f2937" }],
-            },
-            {
-              elementType: "labels.text.fill",
-              stylers: [{ color: "#f3f4f6" }],
-            },
-          ],
-        });
-
-        setMap(mapInstance);
-
-        // Add initial marker
-        const initialMarker = new google.maps.Marker({
-          position: {
-            lat: formData.position.latitude,
-            lng: formData.position.longitude,
-          },
-          map: mapInstance,
-          title: "Mission location",
-          draggable: true,
-        });
-
-        setMarker(initialMarker);
-
-        // Écouter les clics sur la carte
-        mapInstance.addListener("click", (event: google.maps.MapMouseEvent) => {
-          const lat = event.latLng?.lat();
-          const lng = event.latLng?.lng();
-
-          if (lat && lng) {
-            updateMarkerPosition(lat, lng, mapInstance, initialMarker);
-          }
-        });
-
-        // Écouter le glissement du marker
-        initialMarker.addListener("dragend", () => {
-          const position = initialMarker.getPosition();
-          if (position) {
-            updateMarkerPosition(
-              position.lat(),
-              position.lng(),
-              mapInstance,
-              initialMarker
-            );
-          }
-        });
+  // Gérer la sélection de fichier
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (files && files.length > 0) {
+      const file = files[0];
+      if (file.type.startsWith("image/")) {
+        // Afficher l'image immédiatement sans upload
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const imageUrl = e.target?.result as string;
+          setUploadedImages((prev) => [...prev, imageUrl]);
+        };
+        reader.readAsDataURL(file);
+      } else {
+        setError("Please select a valid image file");
       }
-    } catch (error) {
-      console.error("Error loading Google Maps:", error);
     }
   };
 
-  const updateMarkerPosition = (
-    lat: number,
-    lng: number,
-    mapInstance: google.maps.Map,
-    marker: google.maps.Marker
-  ) => {
-    const newPosition = { lat, lng };
-    marker.setPosition(newPosition);
+  // Supprimer une image
+  const removeImage = (index: number) => {
+    setUploadedImages((prev) => prev.filter((_, i) => i !== index));
+  };
 
-    // Géocodage inverse pour obtenir l'adresse
-    const geocoder = new google.maps.Geocoder();
-    geocoder.geocode({ location: newPosition }, (results, status) => {
-      if (status === "OK" && results?.[0]) {
-        setFormData((prev) => ({
-          ...prev,
-          position: { latitude: lat, longitude: lng },
-          address: results[0].formatted_address,
-        }));
+  // Uploader une image vers le backend
+  const uploadImage = async (file: File): Promise<string | null> => {
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const response = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error("Upload failed");
       }
-    });
+
+      const result = await response.json();
+      if (result.success && result.file?.url) {
+        return result.file.url;
+      }
+      throw new Error("Invalid response format");
+    } catch (error) {
+      console.error("Error uploading image:", error);
+      return null;
+    }
   };
 
-  const handleImageUpload = (result: UploadedFile) => {
-    setFormData((prev) => ({
-      ...prev,
-      picture: result.url,
-    }));
-    setUploadError("");
-  };
-
-  const handleImageUploadError = (error: string) => {
-    setUploadError(error);
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  // Soumettre la proposition de mission
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
 
     if (!user) {
-      alert("You must be logged in to create a mission");
+      setError("You must be logged in to submit a mission proposal");
       return;
     }
 
-    if (!formData.picture) {
-      setUploadError("An image is required for the mission");
+    if (uploadedImages.length === 0) {
+      setError("Please select at least one image");
+      return;
+    }
+
+    if (!formData.location.latitude || !formData.location.longitude) {
+      setError("Please select a location on the map");
       return;
     }
 
     setIsSubmitting(true);
+    setError(null);
+    setSuccess(null);
 
     try {
-      const deadline = new Date(formData.deadline);
+      // Uploader toutes les images
+      setIsUploading(true);
+      const uploadedUrls: string[] = [];
 
+      for (let i = 0; i < uploadedImages.length; i++) {
+        const imageUrl = uploadedImages[i];
+        if (imageUrl.startsWith("data:")) {
+          // Convertir data URL en File
+          const response = await fetch(imageUrl);
+          const blob = await response.blob();
+          const file = new File([blob], `image_${i}.png`, {
+            type: "image/png",
+          });
+
+          const uploadedUrl = await uploadImage(file);
+          if (uploadedUrl) {
+            uploadedUrls.push(uploadedUrl);
+          }
+        } else {
+          // URL déjà uploadée
+          uploadedUrls.push(imageUrl);
+        }
+      }
+
+      if (uploadedUrls.length === 0) {
+        throw new Error("Failed to upload images");
+      }
+
+      // Créer la mission
       const missionData = {
-        name: formData.name,
-        description: formData.description,
-        picture: formData.picture,
+        pictures: uploadedUrls,
+        location: formData.location,
         address: formData.address,
-        position: formData.position,
-        deadline: Timestamp.fromDate(deadline),
-        duration: formData.duration,
-        level: formData.level,
-        status: MissionStatus.PENDING,
-        proposerId: user.uid,
-        isVisible: true,
-        amount: formData.amount,
-        maxParticipants: formData.maxParticipants,
-        currentParticipants: 0,
-        tags: formData.tags,
-        requirements: formData.requirements,
       };
 
-      const missionId = await MissionService.createMission(missionData);
+      const response = await fetch("/api/auth-missions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+        body: JSON.stringify(missionData),
+      });
 
-      alert("Mission created successfully!");
-      router.push(`/missions`);
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to create mission");
+      }
+
+      const result = await response.json();
+      setSuccess("Mission proposal submitted successfully!");
+
+      // Rediriger vers la page des missions après 2 secondes
+      setTimeout(() => {
+        router.push("/missions");
+      }, 2000);
     } catch (error) {
-      console.error("Error creating mission:", error);
-      alert("Error creating mission");
+      console.error("Error submitting mission:", error);
+      setError(
+        error instanceof Error ? error.message : "Failed to submit mission"
+      );
     } finally {
       setIsSubmitting(false);
+      setIsUploading(false);
     }
   };
 
+  // Gérer la sélection de localisation
+  const handleLocationSelect = (location: {
+    latitude: number;
+    longitude: number;
+    address: string;
+  }) => {
+    setFormData((prev) => ({
+      ...prev,
+      location: { latitude: location.latitude, longitude: location.longitude },
+      address: location.address,
+    }));
+  };
+
   return (
-    <div className="max-w-4xl mx-auto p-6 space-y-6">
+    <div className="max-w-4xl mx-auto">
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
-            <MapPin className="h-6 w-6 text-primary-600" />
-            <span>Create a new mission</span>
+          <CardTitle className="flex items-center gap-2">
+            <FontAwesomeIcon icon={faMapMarkerAlt} className="text-green-600" />
+            Submit Mission Proposal
           </CardTitle>
+          <p className="text-gray-600 dark:text-gray-400">
+            Help make the world cleaner by proposing an environmental cleanup
+            mission.
+          </p>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Basic information */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Mission Name *
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={formData.name}
-                  onChange={(e) =>
-                    setFormData((prev) => ({ ...prev, name: e.target.value }))
-                  }
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-background text-foreground focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                  placeholder="Ex: Central park cleanup"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Difficulty Level
-                </label>
-                <select
-                  value={formData.level}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      level: e.target.value as MissionLevel,
-                    }))
-                  }
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-background text-foreground focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                >
-                  <option value={MissionLevel.EASY}>Easy</option>
-                  <option value={MissionLevel.MEDIUM}>Medium</option>
-                  <option value={MissionLevel.HIGH}>Hard</option>
-                </select>
-              </div>
-            </div>
-
-            {/* Description */}
+            {/* Section Images */}
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Description *
-              </label>
-              <textarea
-                required
-                rows={4}
-                value={formData.description}
-                onChange={(e) =>
-                  setFormData((prev) => ({
-                    ...prev,
-                    description: e.target.value,
-                  }))
-                }
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-background text-foreground focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                placeholder="Describe in detail the mission and tasks to accomplish..."
-              />
-            </div>
-
-            {/* Image upload */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Mission Image *
-              </label>
-              <ImageUpload
-                onUploadComplete={handleImageUpload}
-                onUploadError={handleImageUploadError}
-                placeholder="Add a photo of the location to clean"
-                className="w-full"
-                maxFileSize={10}
-                acceptedTypes={["image/jpeg", "image/png", "image/webp"]}
-              />
-              {uploadError && (
-                <p className="text-red-600 text-sm mt-2">{uploadError}</p>
-              )}
-            </div>
-
-            {/* Time and financial details */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  <Clock className="inline h-4 w-4 mr-1" />
-                  Duration (hours)
-                </label>
-                <input
-                  type="number"
-                  min="1"
-                  value={formData.duration}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      duration: parseInt(e.target.value),
-                    }))
-                  }
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-background text-foreground focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  <Calendar className="inline h-4 w-4 mr-1" />
-                  Deadline
-                </label>
-                <input
-                  type="datetime-local"
-                  required
-                  value={formData.deadline}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      deadline: e.target.value,
-                    }))
-                  }
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-background text-foreground focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  <DollarSign className="inline h-4 w-4 mr-1" />
-                  Reward (ETH)
-                </label>
-                <input
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  value={formData.amount}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      amount: parseFloat(e.target.value),
-                    }))
-                  }
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-background text-foreground focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                />
-              </div>
-            </div>
-
-            {/* Maximum participants */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                <Users className="inline h-4 w-4 mr-1" />
-                Maximum number of participants
-              </label>
-              <input
-                type="number"
-                min="1"
-                value={formData.maxParticipants}
-                onChange={(e) =>
-                  setFormData((prev) => ({
-                    ...prev,
-                    maxParticipants: parseInt(e.target.value),
-                  }))
-                }
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-background text-foreground focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-              />
-            </div>
-
-            {/* Location */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Mission Location
+                <FontAwesomeIcon icon={faImage} className="mr-2" />
+                Mission Photos
               </label>
               <div className="space-y-4">
-                <input
-                  type="text"
-                  value={formData.address}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      address: e.target.value,
-                    }))
-                  }
-                  placeholder="Mission address"
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-background text-foreground focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                />
+                {/* Zone de drop */}
                 <div
-                  id="mission-map"
-                  className="w-full h-64 rounded-lg border border-gray-300 dark:border-gray-600"
-                />
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={initMap}
-                  className="w-full"
+                  className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-6 text-center hover:border-green-500 transition-colors cursor-pointer"
+                  onClick={() => fileInputRef.current?.click()}
                 >
-                  <MapPin className="h-4 w-4 mr-2" />
-                  Load Map
-                </Button>
+                  <FontAwesomeIcon
+                    icon={faUpload}
+                    className="text-4xl text-gray-400 mb-2"
+                  />
+                  <p className="text-gray-600 dark:text-gray-400">
+                    Click to select images or drag and drop
+                  </p>
+                  <p className="text-sm text-gray-500">
+                    PNG, JPG, JPEG up to 10MB
+                  </p>
+                </div>
+
+                {/* Input fichier caché */}
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileSelect}
+                  className="hidden"
+                  multiple
+                />
+
+                {/* Images sélectionnées */}
+                {uploadedImages.length > 0 && (
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    {uploadedImages.map((imageUrl, index) => (
+                      <div key={index} className="relative group">
+                        <img
+                          src={imageUrl}
+                          alt={`Mission photo ${index + 1}`}
+                          className="w-full h-32 object-cover rounded-lg"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => removeImage(index)}
+                          className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <FontAwesomeIcon icon={faTrash} className="text-xs" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
 
-            {/* Action buttons */}
-            <div className="flex space-x-4 pt-6">
+            {/* Section Localisation */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <FontAwesomeIcon icon={faMapMarkerAlt} className="mr-2" />
+                Mission Location
+              </label>
+              <GoogleMapSelector
+                onLocationSelect={handleLocationSelect}
+                initialLocation={
+                  formData.location.latitude !== 0
+                    ? {
+                        latitude: formData.location.latitude,
+                        longitude: formData.location.longitude,
+                        address: formData.address,
+                      }
+                    : undefined
+                }
+              />
+            </div>
+
+            {/* Messages d'erreur et de succès */}
+            {error && (
+              <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
+                <p className="text-red-800 dark:text-red-200">{error}</p>
+              </div>
+            )}
+
+            {success && (
+              <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
+                <p className="text-green-800 dark:text-green-200">{success}</p>
+              </div>
+            )}
+
+            {/* Boutons d'action */}
+            <div className="flex justify-end space-x-4">
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => router.back()}
-                className="flex-1"
+                onClick={() => router.push("/missions")}
                 disabled={isSubmitting}
               >
                 Cancel
               </Button>
               <Button
                 type="submit"
-                disabled={isSubmitting || !formData.picture}
-                className="flex-1"
+                disabled={
+                  isSubmitting || isUploading || uploadedImages.length === 0
+                }
+                className="bg-green-600 hover:bg-green-700"
               >
-                {isSubmitting ? (
-                  <>
-                    <Loader className="h-4 w-4 mr-2 animate-spin" />
-                    Creating...
-                  </>
-                ) : (
-                  <>
-                    <Save className="h-4 w-4 mr-2" />
-                    Create Mission
-                  </>
-                )}
+                {isSubmitting
+                  ? isUploading
+                    ? "Uploading Images..."
+                    : "Creating Mission..."
+                  : "Submit Proposal"}
               </Button>
             </div>
           </form>

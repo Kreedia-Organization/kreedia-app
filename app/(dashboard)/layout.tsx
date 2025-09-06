@@ -4,7 +4,12 @@ import Header from "@/components/Header";
 import NavBar from "@/components/NavBar";
 import { useApiAuth } from "@/hooks/useApiAuth";
 import { isContributor } from "@/lib/utils/user";
-import { AlertCircle, Loader } from "lucide-react";
+import {
+  faCircleNotch,
+  faSpinner,
+  faTimes,
+} from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
@@ -42,7 +47,18 @@ export default function DashboardLayout({
             className="h-16 mx-auto mb-4"
           />
           <div className="flex items-center justify-center space-x-2">
-            <Loader className="h-6 w-6 animate-spin text-green-500" />
+            <FontAwesomeIcon
+              icon={faCircleNotch}
+              className="h-6 w-6 animate-spin text-green-500"
+            />
+            <FontAwesomeIcon
+              icon={faCircleNotch}
+              className="h-6 w-6 animate-spin text-green-500"
+            />
+            <FontAwesomeIcon
+              icon={faSpinner}
+              className="h-6 w-6 animate-spin text-green-500"
+            />
             <span className="text-gray-300">Loading your session...</span>
           </div>
           {/* Debug information in development */}
@@ -64,7 +80,14 @@ export default function DashboardLayout({
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 flex items-center justify-center">
         <div className="text-center space-y-4 max-w-md">
-          <AlertCircle className="h-16 w-16 text-red-500 mx-auto" />
+          <FontAwesomeIcon
+            icon={faCircleNotch}
+            className="h-6 w-6 animate-spin text-green-500"
+          />
+          <FontAwesomeIcon
+            icon={faTimes}
+            className="h-16 w-16 text-red-500 mx-auto"
+          />
           <h1 className="text-xl font-semibold text-gray-100">
             Authentication Error
           </h1>
@@ -101,7 +124,14 @@ export default function DashboardLayout({
             className="h-16 mx-auto mb-4"
           />
           <div className="flex items-center justify-center space-x-2">
-            <Loader className="h-6 w-6 animate-spin text-green-500" />
+            <FontAwesomeIcon
+              icon={faCircleNotch}
+              className="h-6 w-6 animate-spin text-green-500"
+            />
+            <FontAwesomeIcon
+              icon={faSpinner}
+              className="h-6 w-6 animate-spin text-green-500"
+            />
             <span className="text-gray-300">Redirecting...</span>
           </div>
         </div>

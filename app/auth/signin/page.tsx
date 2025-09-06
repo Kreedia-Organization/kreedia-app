@@ -33,9 +33,7 @@ const ContributorSignInPage: React.FC = () => {
         {/* Header */}
         <div className="text-center">
           <div className="flex justify-center mb-4">
-            <div className="w-12 h-12 bg-gradient-to-r from-green-500 to-blue-600 rounded-lg flex items-center justify-center">
-              <Building2 className="h-6 w-6 text-white" />
-            </div>
+            <img src="/icon.png" alt="Kreedia Logo" className="h-16 w-16" />
           </div>
           <h2 className="text-3xl font-bold text-foreground">
             Contributor Sign In

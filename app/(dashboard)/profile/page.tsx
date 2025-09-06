@@ -3,28 +3,29 @@
 import { Badge } from "@/components/ui/Badge";
 import Button from "@/components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
-import UserSettingsModal from "@/components/UserSettingsModal";
-import { useAuth } from "@/hooks/useAuth";
+import { useApiAuth } from "@/hooks/useApiAuth";
+import { UserService } from "@/lib/api/services/user";
 import { formatDate } from "@/lib/utils";
 import {
-  AlertCircle,
-  Award,
-  Calendar,
-  Download,
-  LogOut,
-  Mail,
-  Settings,
-  Share2,
-  TrendingUp,
-  User,
-} from "lucide-react";
-import Image from "next/image";
+  faEdit,
+  faEnvelope,
+  faPhone,
+  faTimes,
+  faUser,
+} from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import React, { useState } from "react";
 
 const ProfilePage: React.FC = () => {
-  const { user, userData, signOut } = useAuth();
+  const { user, signOut, setUser } = useApiAuth();
   const [isSigningOut, setIsSigningOut] = useState(false);
-  const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [editData, setEditData] = useState({
+    name: user?.name || "",
+    phone: user?.phone || "",
+    gender: (user?.gender as "male" | "female" | "other") || "male",
+  });
 
   const handleSignOut = async () => {
     try {
@@ -38,64 +39,39 @@ const ProfilePage: React.FC = () => {
     }
   };
 
-  const achievements = [
-    {
-      name: "First Cleanup",
-      description: "Completed your first environmental mission",
-      earned: true,
-    },
-    { name: "Eco Warrior", description: "Completed 10 missions", earned: true },
-    {
-      name: "Beach Guardian",
-      description: "Completed 5 beach cleanups",
-      earned: true,
-    },
-    { name: "City Hero", description: "Cleaned 3 urban areas", earned: true },
-    { name: "NFT Collector", description: "Earned 5 NFTs", earned: true },
-    {
-      name: "Master Cleaner",
-      description: "Completed 25 missions",
-      earned: false,
-    },
-    {
-      name: "Legendary Contributor",
-      description: "Earned a Legendary NFT",
-      earned: true,
-    },
-    {
-      name: "Community Leader",
-      description: "Referred 10 friends",
-      earned: false,
-    },
-  ];
+  const handleEdit = () => {
+    setEditData({
+      name: user?.name || "",
+      phone: user?.phone || "",
+      gender: (user?.gender as "male" | "female" | "other") || "male",
+    });
+    setIsEditing(true);
+  };
 
-  const recentActivity = [
-    {
-      date: new Date("2024-03-15"),
-      action: "Completed Central Park cleanup",
-      reward: "0.15 ETH",
-    },
-    {
-      date: new Date("2024-03-12"),
-      action: "Earned Beach Guardian NFT",
-      reward: "NFT",
-    },
-    {
-      date: new Date("2024-03-10"),
-      action: "Started River cleanup mission",
-      reward: "-",
-    },
-    {
-      date: new Date("2024-03-08"),
-      action: "Completed Urban Garden restoration",
-      reward: "0.12 ETH",
-    },
-    {
-      date: new Date("2024-03-05"),
-      action: "Earned Legendary River Protector NFT",
-      reward: "NFT",
-    },
-  ];
+  const handleCancel = () => {
+    setIsEditing(false);
+    setEditData({
+      name: user?.name || "",
+      phone: user?.phone || "",
+      gender: (user?.gender as "male" | "female" | "other") || "male",
+    });
+  };
+
+  const handleSave = async () => {
+    if (!user) return;
+
+    try {
+      setIsSaving(true);
+      const updatedUser = await UserService.updateProfile(editData);
+      setUser(updatedUser);
+      setIsEditing(false);
+      console.log("✅ Profile updated successfully");
+    } catch (error) {
+      console.error("❌ Error updating profile:", error);
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   // Loading state
   if (!user) {
@@ -118,342 +94,219 @@ const ProfilePage: React.FC = () => {
         <div>
           <h1 className="text-3xl font-bold text-foreground">Profile</h1>
           <p className="text-gray-600 dark:text-gray-400">
-            Your environmental impact and achievements
+            Manage your account information
           </p>
-          {/* Debug info in development */}
-          {process.env.NODE_ENV === "development" && (
-            <div className="mt-2 text-xs text-gray-500">
-              Firebase User: {user ? "✅" : "❌"} | Firestore Data:{" "}
-              {userData ? "✅" : "❌"}
+        </div>
+        <div className="flex items-center space-x-2">
+          {!isEditing ? (
+            <Button variant="outline" size="sm" onClick={handleEdit}>
+              <FontAwesomeIcon icon={faEdit} className="h-4 w-4 mr-2" />
+              Edit Profile
+            </Button>
+          ) : (
+            <div className="flex items-center space-x-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleCancel}
+                disabled={isSaving}
+              >
+                <FontAwesomeIcon icon={faTimes} className="h-4 w-4 mr-2" />
+                Cancel
+              </Button>
+              <Button size="sm" onClick={handleSave} disabled={isSaving}>
+                {isSaving ? "Saving..." : "Save Changes"}
+              </Button>
             </div>
           )}
         </div>
-        <div className="flex items-center space-x-2">
-          <Button variant="outline" size="sm">
-            <Share2 className="h-4 w-4 mr-2" />
-            Share Profile
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setShowSettingsModal(true)}
-          >
-            <Settings className="h-4 w-4" />
-          </Button>
-        </div>
       </div>
 
-      {/* Warning if no Firestore data */}
-      {!userData && (
-        <Card className="border-yellow-200 bg-yellow-50 dark:bg-yellow-900/20 dark:border-yellow-700">
-          <CardContent className="p-4">
-            <div className="flex items-center space-x-2 text-yellow-800 dark:text-yellow-200">
-              <AlertCircle className="h-5 w-5" />
-              <span className="text-sm">
-                Profile data is loading from Firestore. Some information may be
-                limited to Firebase Auth data.
-              </span>
+      {/* Profile Card */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Personal Information</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {/* Avatar */}
+          <div className="flex items-center space-x-4">
+            <div className="w-16 h-16 bg-primary-500 rounded-full flex items-center justify-center">
+              <FontAwesomeIcon icon={faUser} className="h-8 w-8 text-white" />
             </div>
-          </CardContent>
-        </Card>
-      )}
+            <div>
+              <h3 className="text-lg font-semibold">{user.name}</h3>
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                {user.email}
+              </p>
+            </div>
+          </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* User Info Card */}
-        <div className="lg:col-span-1">
-          <Card>
-            <CardHeader className="text-center">
-              <div className="mx-auto mb-4">
-                {user?.photoURL ? (
-                  <Image
-                    src={user.photoURL}
-                    alt={user.displayName || "User"}
-                    width={80}
-                    height={80}
-                    className="rounded-full border-4 border-primary-200"
+          {/* Form Fields */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Name */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Full Name
+              </label>
+              {isEditing ? (
+                <input
+                  type="text"
+                  value={editData.name}
+                  onChange={(e) =>
+                    setEditData({ ...editData, name: e.target.value })
+                  }
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:text-white"
+                  placeholder="Enter your full name"
+                />
+              ) : (
+                <p className="text-gray-900 dark:text-gray-100 py-2">
+                  {user.name || "Not provided"}
+                </p>
+              )}
+            </div>
+
+            {/* Email */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Email Address
+              </label>
+              <div className="flex items-center space-x-2">
+                <FontAwesomeIcon
+                  icon={faEnvelope}
+                  className="h-4 w-4 text-gray-400"
+                />
+                <p className="text-gray-900 dark:text-gray-100 py-2">
+                  {user.email}
+                </p>
+              </div>
+              <p className="text-xs text-gray-500 mt-1">
+                Email cannot be changed
+              </p>
+            </div>
+
+            {/* Phone */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Phone Number
+              </label>
+              {isEditing ? (
+                <input
+                  type="tel"
+                  value={editData.phone}
+                  onChange={(e) =>
+                    setEditData({ ...editData, phone: e.target.value })
+                  }
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:text-white"
+                  placeholder="Enter your phone number"
+                />
+              ) : (
+                <div className="flex items-center space-x-2">
+                  <FontAwesomeIcon
+                    icon={faPhone}
+                    className="h-4 w-4 text-gray-400"
                   />
-                ) : (
-                  <div className="w-20 h-20 bg-primary-500 rounded-full flex items-center justify-center">
-                    <User className="h-10 w-10 text-white" />
-                  </div>
-                )}
-              </div>
-              <CardTitle className="text-xl">
-                {user?.displayName || userData?.name || "Eco Warrior"}
-              </CardTitle>
-              <div className="flex items-center justify-center space-x-1 text-gray-600 dark:text-gray-400">
-                <Mail className="h-4 w-4" />
-                <span className="text-sm">
-                  {user?.email || userData?.email || "No email"}
-                </span>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-gray-600 dark:text-gray-400">
-                  Member since
-                </span>
-                <span className="font-medium">
-                  {userData?.createdAt
-                    ? formatDate(userData.createdAt.toDate())
-                    : "Recently"}
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-gray-600 dark:text-gray-400">
-                  User ID
-                </span>
-                <span className="font-mono text-xs text-gray-500">
-                  {user?.uid?.slice(0, 8) || "N/A"}...
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-gray-600 dark:text-gray-400">
-                  Eco Level
-                </span>
-                <Badge className="bg-primary-500 text-white">
-                  Level {userData?.level || 1}
-                </Badge>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-gray-600 dark:text-gray-400">Status</span>
-                <Badge
-                  className={`${
-                    userData?.status === "ACTIVE"
-                      ? "bg-green-500 text-white"
-                      : "bg-gray-500 text-white"
-                  }`}
+                  <p className="text-gray-900 dark:text-gray-100 py-2">
+                    {user.phone || "Not provided"}
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {/* Gender */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Gender
+              </label>
+              {isEditing ? (
+                <select
+                  value={editData.gender}
+                  onChange={(e) =>
+                    setEditData({
+                      ...editData,
+                      gender: e.target.value as "male" | "female" | "other",
+                    })
+                  }
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:text-white"
                 >
-                  {userData?.status || "UNKNOWN"}
+                  <option value="">Select gender</option>
+                  <option value="male">Male</option>
+                  <option value="female">Female</option>
+                  <option value="other">Other</option>
+                </select>
+              ) : (
+                <p className="text-gray-900 dark:text-gray-100 py-2">
+                  {user.gender
+                    ? user.gender.charAt(0).toUpperCase() + user.gender.slice(1)
+                    : "Not provided"}
+                </p>
+              )}
+            </div>
+          </div>
+
+          {/* Account Info */}
+          <div className="border-t pt-4">
+            <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+              Account Information
+            </h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+              <div>
+                <span className="text-gray-600 dark:text-gray-400">
+                  User ID:
+                </span>
+                <span className="ml-2 font-mono text-gray-900 dark:text-gray-100">
+                  {user.uid.slice(0, 8)}...
+                </span>
+              </div>
+              <div>
+                <span className="text-gray-600 dark:text-gray-400">Role:</span>
+                <Badge className="ml-2 bg-primary-500 text-white">
+                  {user.role}
                 </Badge>
               </div>
-              <div className="flex items-center justify-between">
+              <div>
                 <span className="text-gray-600 dark:text-gray-400">
-                  Total Rewards
+                  Member since:
                 </span>
-                <span className="font-bold text-primary-600">
-                  {userData?.totalRewardsEarned || 0} ETH
+                <span className="ml-2 text-gray-900 dark:text-gray-100">
+                  {formatDate(new Date(user.created_at))}
                 </span>
-              </div>
-
-              <Button
-                variant="outline"
-                className="w-full mt-4"
-                onClick={handleSignOut}
-                disabled={isSigningOut}
-              >
-                <LogOut className="h-4 w-4 mr-2" />
-                {isSigningOut ? "Signing Out..." : "Sign Out"}
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Stats and Activity */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* Impact Stats */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <TrendingUp className="h-5 w-5 text-primary-500" />
-                <span>Environmental Impact</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-primary-600">
-                    {userData?.totalMissionsCompleted || 0}
-                  </div>
-                  <div className="text-sm text-gray-600 dark:text-gray-400">
-                    Missions Completed
-                  </div>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-green-600">
-                    {userData?.totalRewardsEarned || 0}
-                  </div>
-                  <div className="text-sm text-gray-600 dark:text-gray-400">
-                    Total Rewards (ETH)
-                  </div>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-blue-600">
-                    {userData?.level || 1}
-                  </div>
-                  <div className="text-sm text-gray-600 dark:text-gray-400">
-                    Current Level
-                  </div>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-purple-600">
-                    {userData?.badges?.length || 0}
-                  </div>
-                  <div className="text-sm text-gray-600 dark:text-gray-400">
-                    Badges Earned
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Achievements */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Award className="h-5 w-5 text-yellow-500" />
-                <span>Achievements</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {achievements.map((achievement, index) => (
-                  <div
-                    key={index}
-                    className={`flex items-center space-x-3 p-3 rounded-lg border ${
-                      achievement.earned
-                        ? "bg-primary-50 border-primary-200 dark:bg-primary-950 dark:border-primary-800"
-                        : "bg-gray-50 border-gray-200 dark:bg-gray-800 dark:border-gray-700"
-                    }`}
-                  >
-                    <div
-                      className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                        achievement.earned
-                          ? "bg-primary-500 text-white"
-                          : "bg-gray-300 text-gray-500 dark:bg-gray-600 dark:text-gray-400"
-                      }`}
-                    >
-                      <Award className="h-4 w-4" />
-                    </div>
-                    <div className="flex-1">
-                      <div
-                        className={`font-medium ${
-                          achievement.earned
-                            ? "text-foreground"
-                            : "text-gray-500 dark:text-gray-400"
-                        }`}
-                      >
-                        {achievement.name}
-                      </div>
-                      <div
-                        className={`text-xs ${
-                          achievement.earned
-                            ? "text-gray-600 dark:text-gray-400"
-                            : "text-gray-400 dark:text-gray-500"
-                        }`}
-                      >
-                        {achievement.description}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Recent Activity */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Calendar className="h-5 w-5 text-blue-500" />
-                <span>Recent Activity</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {recentActivity.map((activity, index) => (
-                  <div
-                    key={index}
-                    className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg"
-                  >
-                    <div className="flex items-center space-x-3">
-                      <div className="w-2 h-2 bg-primary-500 rounded-full"></div>
-                      <div>
-                        <div className="font-medium text-foreground">
-                          {activity.action}
-                        </div>
-                        <div className="text-sm text-gray-600 dark:text-gray-400">
-                          {formatDate(activity.date)}
-                        </div>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <div
-                        className={`font-medium ${
-                          activity.reward === "NFT"
-                            ? "text-purple-600"
-                            : activity.reward === "-"
-                            ? "text-gray-500"
-                            : "text-primary-600"
-                        }`}
-                      >
-                        {activity.reward}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <div className="mt-4 text-center">
-                <Button variant="outline" size="sm">
-                  <Download className="h-4 w-4 mr-2" />
-                  Export Activity
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-
-      {/* Debug information (development only) */}
-      {process.env.NODE_ENV === "development" && (
-        <Card className="border-blue-200 bg-blue-50 dark:bg-blue-900/20 dark:border-blue-700">
-          <CardHeader>
-            <CardTitle className="text-sm text-blue-800 dark:text-blue-200">
-              🔍 Development Debug Info
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2 text-xs">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <strong>Firebase Auth:</strong>
-                <br />
-                UID: {user?.uid || "N/A"}
-                <br />
-                Email: {user?.email || "N/A"}
-                <br />
-                Display Name: {user?.displayName || "N/A"}
-                <br />
-                Email Verified: {user?.emailVerified?.toString() || "N/A"}
               </div>
               <div>
-                <strong>Firestore Data:</strong>
-                <br />
-                Data Available: {userData ? "✅ Yes" : "❌ No"}
-                <br />
-                Status: {userData?.status || "N/A"}
-                <br />
-                Level: {userData?.level || "N/A"}
-                <br />
-                Total Missions: {userData?.totalMissionsCompleted || "N/A"}
-                <br />
-                Total Rewards: {userData?.totalRewardsEarned || "N/A"}
+                <span className="text-gray-600 dark:text-gray-400">
+                  Last updated:
+                </span>
+                <span className="ml-2 text-gray-900 dark:text-gray-100">
+                  {formatDate(new Date(user.updated_at))}
+                </span>
               </div>
             </div>
-            {!userData && (
-              <div className="mt-3 p-2 bg-yellow-100 dark:bg-yellow-900/30 rounded text-yellow-800 dark:text-yellow-200">
-                <strong>⚠️ Firestore Data Missing:</strong> Check `/debug` page
-                for diagnostics
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      )}
+          </div>
 
-      {/* Settings Modal */}
-      <UserSettingsModal
-        isOpen={showSettingsModal}
-        onClose={() => setShowSettingsModal(false)}
-      />
+          {/* Wallet Address */}
+          {user.wallet_address && (
+            <div className="border-t pt-4">
+              <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Wallet Address
+              </h4>
+              <p className="text-sm font-mono text-gray-900 dark:text-gray-100 bg-gray-100 dark:bg-gray-800 p-2 rounded">
+                {user.wallet_address}
+              </p>
+            </div>
+          )}
+
+          {/* Sign Out Button */}
+          <div className="border-t pt-4">
+            <Button
+              variant="outline"
+              onClick={handleSignOut}
+              disabled={isSigningOut}
+              className="w-full"
+            >
+              {isSigningOut ? "Signing Out..." : "Sign Out"}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };

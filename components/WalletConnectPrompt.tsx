@@ -1,7 +1,8 @@
 "use client";
 
+import { faLock, faWallet } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
-import { Lock, Wallet } from "lucide-react";
 import React from "react";
 import { Card, CardContent } from "./ui/Card";
 
@@ -66,8 +67,14 @@ const WalletConnectPrompt: React.FC<WalletConnectPromptProps> = ({
             {/* Icône */}
             <div className="flex justify-center mb-4">
               <div className="relative">
-                <Wallet className="h-12 w-12 text-primary-600 dark:text-primary-400" />
-                <Lock className="h-6 w-6 text-orange-500 absolute -bottom-1 -right-1 bg-white dark:bg-gray-800 rounded-full p-1" />
+                <FontAwesomeIcon
+                  icon={faWallet}
+                  className="h-12 w-12 text-primary-600 dark:text-primary-400"
+                />
+                <FontAwesomeIcon
+                  icon={faLock}
+                  className="h-6 w-6 text-orange-500 absolute -bottom-1 -right-1 bg-white dark:bg-gray-800 rounded-full p-1"
+                />
               </div>
             </div>
 
@@ -121,7 +128,10 @@ const WalletConnectPrompt: React.FC<WalletConnectPromptProps> = ({
                               type="button"
                               className="flex items-center space-x-2 bg-primary-600 hover:bg-primary-700 text-white px-6 py-3 rounded-lg font-medium transition-colors shadow-lg hover:shadow-xl"
                             >
-                              <Wallet className="h-5 w-5" />
+                              <FontAwesomeIcon
+                                icon={faWallet}
+                                className="h-5 w-5"
+                              />
                               <span>Connect Wallet</span>
                             </button>
                           );

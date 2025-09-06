@@ -3,7 +3,15 @@
 import Button from "@/components/ui/Button";
 import { Card, CardContent } from "@/components/ui/Card";
 import { useApiAuth } from "@/hooks/useApiAuth";
-import { ArrowRight, Eye, EyeOff, Lock, Mail, User } from "lucide-react";
+import {
+  faArrowRight,
+  faEnvelope,
+  faEye,
+  faEyeSlash,
+  faLock,
+  faUser,
+} from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import React, { useState } from "react";
@@ -121,7 +129,10 @@ const NgoSignInPage: React.FC = () => {
                     }`}
                     disabled={loading}
                   />
-                  <Mail className="h-5 w-5 text-gray-400 absolute left-3 top-3.5" />
+                  <FontAwesomeIcon
+                    icon={faEnvelope}
+                    className="h-5 w-5 text-gray-400 absolute left-3 top-3.5"
+                  />
                 </div>
                 {validationErrors.email && (
                   <p className="mt-1 text-sm text-red-600 dark:text-red-400">
@@ -149,7 +160,10 @@ const NgoSignInPage: React.FC = () => {
                     }`}
                     disabled={loading}
                   />
-                  <Lock className="h-5 w-5 text-gray-400 absolute left-3 top-3.5" />
+                  <FontAwesomeIcon
+                    icon={faLock}
+                    className="h-5 w-5 text-gray-400 absolute left-3 top-3.5"
+                  />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
@@ -157,9 +171,9 @@ const NgoSignInPage: React.FC = () => {
                     disabled={loading}
                   >
                     {showPassword ? (
-                      <EyeOff className="h-5 w-5" />
+                      <FontAwesomeIcon icon={faEyeSlash} className="h-5 w-5" />
                     ) : (
-                      <Eye className="h-5 w-5" />
+                      <FontAwesomeIcon icon={faEye} className="h-5 w-5" />
                     )}
                   </button>
                 </div>
@@ -193,9 +207,9 @@ const NgoSignInPage: React.FC = () => {
               href="/auth/signin"
               className="text-primary-600 dark:text-primary-400 hover:underline font-medium flex items-center justify-center space-x-1"
             >
-              <User className="h-4 w-4" />
+              <FontAwesomeIcon icon={faUser} className="h-4 w-4" />
               <span>Contributor Login</span>
-              <ArrowRight className="h-3 w-3" />
+              <FontAwesomeIcon icon={faArrowRight} className="h-3 w-3" />
             </Link>
           </p>
         </div>

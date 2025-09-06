@@ -1,5 +1,6 @@
 "use client";
 
+import { useWallet } from '@/hooks/useWallet';
 import { AuthService } from '@/lib/api/services/auth';
 import { auth } from '@/lib/firebase/config';
 import { User } from '@/types/api';
@@ -29,6 +30,7 @@ export const useApiAuth = (): UseApiAuthReturn => {
     const [error, setError] = useState<string | null>(null);
     const [authInitialized, setAuthInitialized] = useState(false);
     const router = useRouter();
+    const { disconnectWallet } = useWallet();
 
     // Function to refresh user data from API
     const refreshUserData = async (): Promise<void> => {
@@ -154,18 +156,45 @@ export const useApiAuth = (): UseApiAuthReturn => {
     const signOut = async (): Promise<void> => {
         try {
             setLoading(true);
+            console.log('🔄 Starting logout process...');
 
-            // Sign out from Firebase if user is signed in
-            if (firebaseUser) {
-                await firebaseSignOut(auth);
+            // 1. Disconnect wallet first
+            try {
+                await disconnectWallet();
+                console.log('✅ Wallet disconnected successfully');
+            } catch (walletErr) {
+                console.warn('⚠️ Wallet disconnect warning:', walletErr);
+                // Continue with logout even if wallet disconnect fails
             }
 
-            // Clear local storage and state
+            // 2. Call API logout endpoint
+            try {
+                await AuthService.logout();
+                console.log('✅ API logout successful');
+            } catch (apiErr: any) {
+                console.warn('⚠️ API logout warning:', apiErr);
+                // Continue with local cleanup even if API logout fails
+            }
+
+            // 3. Sign out from Firebase if user is signed in
+            if (firebaseUser) {
+                try {
+                    await firebaseSignOut(auth);
+                    console.log('✅ Firebase logout successful');
+                } catch (firebaseErr) {
+                    console.warn('⚠️ Firebase logout warning:', firebaseErr);
+                }
+            }
+
+            // 4. Clear local storage and state
             AuthService.clearAuthToken();
             setUser(null);
             setFirebaseUser(null);
 
-            console.log('✅ User signed out successfully');
+            console.log('✅ Complete logout successful');
+
+            // 5. Redirect to home page
+            router.push('/');
 
         } catch (err: any) {
             console.error('❌ Sign out error:', err);

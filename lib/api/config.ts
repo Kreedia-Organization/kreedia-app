@@ -4,6 +4,22 @@ export const API_CONFIG = {
     TIMEOUT: 30000,
 } as const;
 
+// Configuration Blockchain
+export const BLOCKCHAIN_CONFIG = {
+    // Adresse du contrat Kreedia sur Sepolia testnet
+    KREEDIA_CONTRACT_ADDRESS: process.env.NEXT_PUBLIC_KREEDIA_CONTRACT_ADDRESS || '',
+    // Adresses des tokens sur Sepolia testnet
+    TOKEN_ADDRESSES: {
+        USDC: process.env.NEXT_PUBLIC_USDC_ADDRESS || '0x94a9D9AC8a22534E3FaCa9F4e7F2E2cf85d5E4C8', // USDC sur Sepolia
+        USDT: process.env.NEXT_PUBLIC_USDT_ADDRESS || '0x7169D38820dfd117C3FA1f22a697dBA58d90BA06', // USDT sur Sepolia
+        DAI: process.env.NEXT_PUBLIC_DAI_ADDRESS || '0xFF34B3d4Aee8ddCd6F9AFFFB6Fe49bD371b8a357', // DAI sur Sepolia
+    },
+    // RPC URL pour Sepolia
+    RPC_URL: process.env.NEXT_PUBLIC_RPC_URL || 'https://sepolia.infura.io/v3/YOUR_INFURA_KEY',
+    // Chain ID pour Sepolia
+    CHAIN_ID: 11155111,
+} as const;
+
 export const API_ENDPOINTS = {
     // Authentication
     AUTH: {
