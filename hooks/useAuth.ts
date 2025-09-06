@@ -8,6 +8,7 @@ declare global {
                 id: {
                     initialize: (config: any) => void;
                     prompt: (callback: (notification: any) => void) => void;
+                    renderButton: (element: HTMLElement, config: any) => void;
                 };
             };
         };
@@ -166,8 +167,9 @@ export const useAuth = (): UseAuthReturn => {
             setIsLoading(true);
             setError(null);
 
-            // Utiliser Google Identity Services pour l'authentification
+            // Utiliser une approche plus simple et fiable
             const response = await new Promise<any>((resolve, reject) => {
+                // Initialiser Google Identity Services
                 window.google.accounts.id.initialize({
                     client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || 'your-google-client-id',
                     callback: (response: any) => {
@@ -178,14 +180,54 @@ export const useAuth = (): UseAuthReturn => {
                         } catch (err) {
                             reject(new Error('Failed to decode Google token'));
                         }
-                    }
+                    },
+                    auto_select: false,
+                    cancel_on_tap_outside: false
                 });
 
-                window.google.accounts.id.prompt((notification: any) => {
-                    if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
-                        reject(new Error('Google sign-in was cancelled or blocked'));
-                    }
+                // Créer un bouton temporaire et le cliquer
+                const tempDiv = document.createElement('div');
+                tempDiv.style.position = 'fixed';
+                tempDiv.style.top = '-1000px';
+                tempDiv.style.left = '-1000px';
+                tempDiv.style.visibility = 'hidden';
+                document.body.appendChild(tempDiv);
+
+                // Rendre le bouton Google
+                window.google.accounts.id.renderButton(tempDiv, {
+                    theme: 'outline',
+                    size: 'large',
+                    type: 'standard',
+                    shape: 'rectangular',
+                    text: 'signin_with',
+                    width: 200
                 });
+
+                // Attendre que le bouton soit rendu et le cliquer
+                setTimeout(() => {
+                    const button = tempDiv.querySelector('div[role="button"]') as HTMLElement;
+                    if (button) {
+                        button.click();
+                    } else {
+                        // Fallback: essayer prompt
+                        try {
+                            window.google.accounts.id.prompt((notification: any) => {
+                                if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+                                    reject(new Error('Google sign-in was cancelled or blocked'));
+                                }
+                            });
+                        } catch (promptError) {
+                            reject(new Error('Google sign-in is not available. Please check your browser settings and try again.'));
+                        }
+                    }
+                }, 100);
+
+                // Nettoyer après 10 secondes
+                setTimeout(() => {
+                    if (document.body.contains(tempDiv)) {
+                        document.body.removeChild(tempDiv);
+                    }
+                }, 10000);
             });
 
             console.log('✅ Google Auth successful:', response);
