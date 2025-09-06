@@ -1,10 +1,8 @@
 "use client";
 
 import { MissionService } from '@/lib/firebase/services/missions';
-import { COLLECTIONS, Mission, MissionLevel, MissionStatus } from '@/types/firebase';
-import { limit, orderBy, where } from 'firebase/firestore';
+import { Mission, MissionLevel, MissionStatus } from '@/types/firebase';
 import { useEffect, useState } from 'react';
-import { useFirestore } from './useFirestore';
 
 interface UseMissionsOptions {
     status?: MissionStatus;
@@ -34,24 +32,53 @@ export const useMissions = (options: UseMissionsOptions = {}): UseMissionsReturn
         enabled = true
     } = options;
 
+    const [missions, setMissions] = useState<Mission[]>([]);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
     const [hasMore, setHasMore] = useState(true);
     const [lastDoc, setLastDoc] = useState<any>(null);
 
-    // Build Firestore query constraints
-    const constraints = [];
+    // Use a simpler approach to avoid Firestore assertion errors
+    const fetchMissions = async () => {
+        if (!enabled) return;
 
-    if (status) constraints.push(where('status', '==', status));
-    if (level) constraints.push(where('level', '==', level));
-    if (proposerId) constraints.push(where('proposerId', '==', proposerId));
-    if (isVisible !== undefined) constraints.push(where('isVisible', '==', isVisible));
+        try {
+            setLoading(true);
+            setError(null);
 
-    constraints.push(orderBy('createdAt', 'desc'));
-    constraints.push(limit(limitCount));
+            const { missions: fetchedMissions, lastDoc: newLastDoc } = await MissionService.getMissions({
+                status,
+                level,
+                proposerId,
+                isVisible,
+                limit: limitCount,
+                lastDoc
+            });
 
-    const { data: missions, loading, error, refetch } = useFirestore<Mission>(
-        COLLECTIONS.MISSIONS,
-        { constraints, enabled }
-    );
+            setMissions(fetchedMissions);
+            setLastDoc(newLastDoc);
+            setHasMore(fetchedMissions.length === limitCount);
+        } catch (err: any) {
+            console.error('Error fetching missions:', err);
+            if (err.message.includes('INTERNAL ASSERTION FAILED')) {
+                setError('Database connection error. Please refresh the page.');
+            } else {
+                setError(err.message);
+            }
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const refetch = () => {
+        setLastDoc(null);
+        setHasMore(true);
+        fetchMissions();
+    };
+
+    useEffect(() => {
+        fetchMissions();
+    }, [status, level, proposerId, isVisible, limitCount, enabled]);
 
     const loadMore = async () => {
         if (!hasMore || loading) return;

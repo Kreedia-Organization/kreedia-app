@@ -2,8 +2,9 @@
 
 import Header from "@/components/Header";
 import NavBar from "@/components/NavBar";
-import { useAuth } from "@/hooks/useAuth";
-import { AlertCircle, Loader2 } from "lucide-react";
+import { useApiAuth } from "@/hooks/useApiAuth";
+import { isContributor } from "@/lib/utils/user";
+import { AlertCircle, Loader } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
@@ -12,8 +13,7 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { user, userData, loading, error, isAuthenticated, signOut } =
-    useAuth();
+  const { user, loading, error, isAuthenticated, signOut } = useApiAuth();
   const router = useRouter();
   const [isRedirecting, setIsRedirecting] = useState(false);
 
@@ -24,8 +24,12 @@ export default function DashboardLayout({
       console.log("User not authenticated, redirecting to sign-in");
       setIsRedirecting(true);
       router.push("/auth/signin");
+    } else if (user && !isContributor(user) && !isRedirecting) {
+      // Si l'utilisateur est connecté mais n'est pas un contributeur (ex: NGO)
+      setIsRedirecting(true);
+      router.push("/ngo/dashboard");
     }
-  }, [isAuthenticated, loading, router, isRedirecting]);
+  }, [isAuthenticated, loading, router, isRedirecting, user]);
 
   // Main loading screen
   if (loading) {
@@ -38,7 +42,7 @@ export default function DashboardLayout({
             className="h-16 mx-auto mb-4"
           />
           <div className="flex items-center justify-center space-x-2">
-            <Loader2 className="h-6 w-6 animate-spin text-green-500" />
+            <Loader className="h-6 w-6 animate-spin text-green-500" />
             <span className="text-gray-300">Loading your session...</span>
           </div>
           {/* Debug information in development */}
@@ -46,7 +50,7 @@ export default function DashboardLayout({
             <div className="mt-4 p-3 bg-gray-800 rounded-lg text-xs text-left text-gray-400">
               <p>Loading: {loading.toString()}</p>
               <p>User: {user ? "Present" : "None"}</p>
-              <p>UserData: {userData ? "Present" : "None"}</p>
+              <p>UserData: {user ? "Present" : "None"}</p>
               <p>Authenticated: {isAuthenticated.toString()}</p>
             </div>
           )}
@@ -97,7 +101,7 @@ export default function DashboardLayout({
             className="h-16 mx-auto mb-4"
           />
           <div className="flex items-center justify-center space-x-2">
-            <Loader2 className="h-6 w-6 animate-spin text-green-500" />
+            <Loader className="h-6 w-6 animate-spin text-green-500" />
             <span className="text-gray-300">Redirecting...</span>
           </div>
         </div>
@@ -115,11 +119,12 @@ export default function DashboardLayout({
       </main>
 
       {/* User status indicator (debug) */}
-      {process.env.NODE_ENV === "development" && userData && (
+      {process.env.NODE_ENV === "development" && user && (
         <div className="fixed bottom-4 left-4 p-2 bg-gray-800 text-white text-xs rounded-lg opacity-80">
-          <p>✅ {userData.name}</p>
-          <p>📧 {userData.email}</p>
-          <p>🆔 {userData.id?.slice(0, 8)}...</p>
+          <p>✅ {user.name}</p>
+          <p>📧 {user.email}</p>
+          <p>🆔 {user.uid?.slice(0, 8)}...</p>
+          <p>👤 {user.role}</p>
         </div>
       )}
     </div>

@@ -58,17 +58,28 @@ export const useFirestore = <T extends DocumentData>(
             unsubscribe = onSnapshot(
                 q,
                 (snapshot) => {
-                    const documents = snapshot.docs.map(doc => ({
-                        id: doc.id,
-                        ...doc.data()
-                    })) as unknown as T[];
+                    try {
+                        const documents = snapshot.docs.map(doc => ({
+                            id: doc.id,
+                            ...doc.data()
+                        })) as unknown as T[];
 
-                    setData(documents);
-                    setLoading(false);
+                        setData(documents);
+                        setLoading(false);
+                    } catch (err) {
+                        console.error('Error processing snapshot:', err);
+                        setError('Error processing data');
+                        setLoading(false);
+                    }
                 },
                 (err) => {
                     console.error(`Error fetching ${collectionName}:`, err);
-                    setError(err.message);
+                    // Handle specific Firestore assertion errors
+                    if (err.message.includes('INTERNAL ASSERTION FAILED')) {
+                        setError('Database connection error. Please refresh the page.');
+                    } else {
+                        setError(err.message);
+                    }
                     setLoading(false);
                 }
             );

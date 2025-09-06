@@ -1,16 +1,16 @@
 "use client";
 
-import { useAuth } from "@/hooks/useAuth";
+import { useApiAuth } from "@/hooks/useApiAuth";
 import { useTheme } from "@/lib/theme-provider";
-import { ChevronDown, LogOut, Settings, User } from "lucide-react";
-import Image from "next/image";
+import { ArrowRight, Calendar, ChevronDown, Cog } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import React, { useEffect, useRef, useState } from "react";
 import NotificationDropdown from "./NotificationDropdown";
+import UserAvatar from "./UserAvatar";
 
 const Header: React.FC = () => {
-  const { user, userData, signOut, loading } = useAuth();
+  const { user, signOut, loading } = useApiAuth();
   const { theme, toggleTheme } = useTheme();
   const router = useRouter();
   const [showUserMenu, setShowUserMenu] = useState(false);
@@ -59,36 +59,28 @@ const Header: React.FC = () => {
             {/* Theme toggle - Disabled (Dark mode only) */}
 
             {/* User menu */}
-            {user && userData && (
+            {user && (
               <div className="relative" ref={userMenuRef}>
                 <button
                   onClick={() => setShowUserMenu(!showUserMenu)}
                   className="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
                 >
-                  <div className="text-right hidden sm:block">
-                    <p className="text-sm font-medium text-foreground">
-                      {userData.name || user.displayName || "User"}
-                    </p>
-                    <p className="text-xs text-gray-500">
-                      {userData.walletAddress
-                        ? `${userData.walletAddress.slice(
-                            0,
-                            6
-                          )}...${userData.walletAddress.slice(-4)}`
-                        : user.email}
-                    </p>
-                  </div>
-                  <div className="relative">
-                    <Image
-                      src={
-                        userData.profileImage || user.photoURL || "/icon.png"
-                      }
-                      alt={userData.name || user.displayName || "User"}
-                      width={40}
-                      height={40}
-                      className="rounded-full border-2 border-primary-200"
-                    />
-                    <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-2 border-card rounded-full"></div>
+                  <UserAvatar
+                    user={user}
+                    size="md"
+                    showName={true}
+                    showWallet={true}
+                    className="hidden sm:flex"
+                  />
+                  <div className="sm:hidden">
+                    <div className="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center text-white font-medium text-sm">
+                      {user.name
+                        .split(" ")
+                        .map((word) => word.charAt(0))
+                        .join("")
+                        .toUpperCase()
+                        .slice(0, 2)}
+                    </div>
                   </div>
                   <ChevronDown
                     className={`h-4 w-4 text-gray-500 transition-transform ${
@@ -103,32 +95,23 @@ const Header: React.FC = () => {
                     {/* User information */}
                     <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700">
                       <div className="flex items-center space-x-3">
-                        <Image
-                          src={
-                            userData.profileImage ||
-                            user.photoURL ||
-                            "/icon.png"
-                          }
-                          alt={userData.name || "User"}
-                          width={48}
-                          height={48}
-                          className="rounded-full"
+                        <UserAvatar
+                          user={user}
+                          size="lg"
+                          showName={false}
+                          showWallet={false}
                         />
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
-                            {userData.name || user.displayName || "User"}
+                            {user.name}
                           </p>
                           <p className="text-xs text-gray-500 truncate">
-                            {userData.walletAddress
-                              ? `${userData.walletAddress.slice(
-                                  0,
-                                  6
-                                )}...${userData.walletAddress.slice(-4)}`
-                              : user.email}
+                            {user.email}
                           </p>
-                          {userData.walletAddress && (
+                          {user.wallet_address && (
                             <p className="text-xs text-green-600 dark:text-green-400 truncate">
-                              Wallet Connected
+                              Wallet: {user.wallet_address.slice(0, 6)}...
+                              {user.wallet_address.slice(-4)}
                             </p>
                           )}
                         </div>
@@ -142,7 +125,7 @@ const Header: React.FC = () => {
                         onClick={() => setShowUserMenu(false)}
                         className="flex items-center w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                       >
-                        <User className="h-4 w-4 mr-3" />
+                        <Calendar className="h-4 w-4 mr-3" />
                         My Profile
                       </Link>
 
@@ -151,7 +134,7 @@ const Header: React.FC = () => {
                         onClick={() => setShowUserMenu(false)}
                         className="flex items-center w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                       >
-                        <Settings className="h-4 w-4 mr-3" />
+                        <Cog className="h-4 w-4 mr-3" />
                         Settings
                       </Link>
                     </div>
@@ -163,7 +146,7 @@ const Header: React.FC = () => {
                         disabled={loading}
                         className="flex items-center w-full px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 disabled:opacity-50"
                       >
-                        <LogOut className="h-4 w-4 mr-3" />
+                        <ArrowRight className="h-4 w-4 mr-3" />
                         {loading ? "Signing out..." : "Sign out"}
                       </button>
                     </div>

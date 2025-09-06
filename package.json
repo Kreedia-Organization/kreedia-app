@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "clean": "node scripts/clean-dev.js",
+    "fresh": "npm run clean && npm install && npm run dev"
   },
   "dependencies": {
     "@googlemaps/js-api-loader": "^1.16.10",

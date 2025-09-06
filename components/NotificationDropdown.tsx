@@ -3,7 +3,7 @@
 import { useNotifications } from "@/hooks/useNotifications";
 import { Notification, NotificationType } from "@/types/firebase";
 import { formatDistanceToNow } from "date-fns";
-import { Bell, CheckCheck, ExternalLink, X } from "lucide-react";
+import { ArrowUpRight, Bell, CheckCheck, Clock } from "lucide-react";
 import Link from "next/link";
 import React, { useEffect, useRef, useState } from "react";
 
@@ -139,7 +139,7 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
                 onClick={() => setIsOpen(false)}
                 className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
               >
-                <X className="h-4 w-4" />
+                <Clock className="h-4 w-4" />
               </button>
             </div>
           </div>
@@ -214,7 +214,7 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
                               className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 flex items-center space-x-1"
                             >
                               <span>View</span>
-                              <ExternalLink className="h-3 w-3" />
+                              <ArrowUpRight className="h-3 w-3" />
                             </Link>
                           )}
                         </div>
