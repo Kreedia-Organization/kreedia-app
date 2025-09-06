@@ -3,7 +3,7 @@
 import { Badge } from "@/components/ui/Badge";
 import Button from "@/components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
-import { useApiAuth } from "@/hooks/useApiAuth";
+import { useAuth } from "@/hooks/useAuth";
 import { MissionStatus } from "@/types/api";
 import {
   faAward,
@@ -316,40 +316,75 @@ const MissionDetailsModal: React.FC<MissionDetailsModalProps> = ({
 
 const MissionsPage: React.FC = () => {
   const router = useRouter();
-  const { user } = useApiAuth();
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<MissionStatus | "all">("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [missions, setMissions] = useState<Mission[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [selectedMission, setSelectedMission] = useState<Mission | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Fetch missions from API
-  useEffect(() => {
-    const fetchMissions = async () => {
-      if (!user) return;
+  const fetchMissions = async () => {
+    if (!user) return;
 
-      try {
-        setLoading(true);
-        const response = await fetch("/api/auth-missions/my-missions", {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
-          },
-        });
+    try {
+      setLoading(true);
+      setError(null);
+      const token = localStorage.getItem("token");
 
-        if (response.ok) {
-          const data = await response.json();
-          setMissions(data.data || []);
-        } else {
-          console.error("Failed to fetch missions");
-        }
-      } catch (error) {
-        console.error("Error fetching missions:", error);
-      } finally {
-        setLoading(false);
+      if (!token) {
+        console.error("No token found");
+        setError("No authentication token found");
+        return;
       }
-    };
 
+      const response = await fetch("/api/auth-missions/my-missions", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log("📥 Missions API Response:", data);
+
+        if (data.success && Array.isArray(data.data)) {
+          setMissions(data.data);
+          console.log("✅ Missions loaded:", data.data.length, "missions");
+        } else {
+          console.error(
+            "API returned success=false or data is not an array:",
+            data
+          );
+          setError("Invalid response format from server");
+          setMissions([]);
+        }
+      } else {
+        const errorText = await response.text();
+        console.error(
+          "Failed to fetch missions:",
+          response.status,
+          response.statusText,
+          errorText
+        );
+        setError(
+          `Failed to fetch missions: ${response.status} ${response.statusText}`
+        );
+        setMissions([]);
+      }
+    } catch (error) {
+      console.error("Error fetching missions:", error);
+      setError("Network error while fetching missions");
+      setMissions([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchMissions();
   }, [user]);
 
@@ -440,7 +475,7 @@ const MissionsPage: React.FC = () => {
             className="flex items-center space-x-2"
           >
             <FontAwesomeIcon icon={faPlus} className="h-4 w-4" />
-            <span>Create Mission</span>
+            <span>Propose a Mission</span>
           </Button>
         </div>
       </div>
@@ -583,8 +618,35 @@ const MissionsPage: React.FC = () => {
           </div>
         )}
 
+        {/* Error State */}
+        {error && !loading && (
+          <Card>
+            <CardContent className="p-8 text-center">
+              <div className="w-16 h-16 bg-red-100 dark:bg-red-900 rounded-full flex items-center justify-center mx-auto mb-4">
+                <FontAwesomeIcon
+                  icon={faTimes}
+                  className="h-8 w-8 text-red-500"
+                />
+              </div>
+              <h3 className="text-lg font-medium text-foreground mb-2">
+                Error Loading Missions
+              </h3>
+              <p className="text-gray-600 dark:text-gray-400 mb-4">{error}</p>
+              <Button
+                onClick={() => {
+                  setError(null);
+                  fetchMissions();
+                }}
+                variant="outline"
+              >
+                Try Again
+              </Button>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Mission Grid */}
-        {!loading && (
+        {!loading && !error && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {filteredMissions.map((mission) => (
               <Card
@@ -672,7 +734,7 @@ const MissionsPage: React.FC = () => {
         )}
 
         {/* Empty State */}
-        {filteredMissions.length === 0 && !loading && (
+        {filteredMissions.length === 0 && !loading && !error && (
           <Card>
             <CardContent className="p-12 text-center">
               <div className="w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4">

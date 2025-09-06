@@ -16,6 +16,10 @@ export class NotificationService {
         return apiClient.get<UnreadCount>(API_ENDPOINTS.NOTIFICATIONS.UNREAD_COUNT);
     }
 
+    static async markAsRead(notificationId: string): Promise<void> {
+        return apiClient.put<void>(`${API_ENDPOINTS.NOTIFICATIONS.LIST}/${notificationId}/read`);
+    }
+
     static async markAllAsRead(): Promise<void> {
         return apiClient.put<void>(API_ENDPOINTS.NOTIFICATIONS.MARK_ALL_READ);
     }

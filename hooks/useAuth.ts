@@ -1,182 +1,270 @@
 "use client";
 
-import { AuthService } from '@/lib/firebase/auth';
-import { User } from '@/types/firebase';
-import { User as FirebaseUser } from 'firebase/auth';
+// Déclarer les types pour Google Identity Services
+declare global {
+    interface Window {
+        google: {
+            accounts: {
+                id: {
+                    initialize: (config: any) => void;
+                    prompt: (callback: (notification: any) => void) => void;
+                };
+            };
+        };
+    }
+}
+
+import { AuthService } from '@/lib/api/services/auth';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+
+interface User {
+    id: number;
+    uid: string;
+    name: string;
+    email: string;
+    phone?: string | null;
+    gender?: 'male' | 'female' | 'other' | null;
+    wallet_address?: string | null;
+    ens_name?: string | null;
+    role: 'contributor' | 'ngo';
+    created_at: string;
+    updated_at: string;
+}
+
+interface AuthResponse {
+    success: boolean;
+    message: string;
+    data: {
+        user: User;
+        token: string;
+        token_type: string;
+    };
+}
 
 interface UseAuthReturn {
-    user: FirebaseUser | null;
-    userData: User | null;
-    loading: boolean;
+    user: User | null;
+    token: string | null;
+    isAuthenticated: boolean;
+    isLoading: boolean;
+    loading: boolean; // Alias pour compatibilité
     error: string | null;
     signInWithGoogle: () => Promise<void>;
-    signOut: () => Promise<void>;
-    isAuthenticated: boolean;
+    signOut: () => void;
     refreshUserData: () => Promise<void>;
     clearError: () => void;
+    isGoogleLoaded: boolean;
 }
 
 export const useAuth = (): UseAuthReturn => {
-    const [user, setUser] = useState<FirebaseUser | null>(null);
-    const [userData, setUserData] = useState<User | null>(null);
-    const [loading, setLoading] = useState(true);
+    const [user, setUser] = useState<User | null>(null);
+    const [token, setToken] = useState<string | null>(null);
+    const [isLoading, setIsLoading] = useState(false);
+    const [isLoggingOut, setIsLoggingOut] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [authInitialized, setAuthInitialized] = useState(false);
+    const [isGoogleLoaded, setIsGoogleLoaded] = useState(false);
     const router = useRouter();
 
-    // Function to refresh user data
-    const refreshUserData = async (): Promise<void> => {
-        if (!user) return;
-
-        try {
-            const firestoreUserData = await AuthService.getCurrentUserData();
-            setUserData(firestoreUserData);
-            console.log('User data refreshed:', firestoreUserData);
-        } catch (err) {
-            console.error('Error refreshing user data:', err);
-            setError('Error loading user data');
-        }
-    };
-
-    // Function to clear errors
-    const clearError = (): void => {
-        setError(null);
-    };
-
+    // Charger les données depuis localStorage au montage
     useEffect(() => {
-        let mounted = true;
-
-        const unsubscribe = AuthService.onAuthStateChanged(async (firebaseUser) => {
-            if (!mounted) return;
-
-            console.log('Auth state changed:', firebaseUser ? 'User logged in' : 'User logged out');
-            setError(null);
-
+        const loadStoredData = () => {
             try {
-                if (firebaseUser) {
-                    console.log('✅ User authenticated:', firebaseUser.uid);
-                    console.log('🔍 Firebase User details:', {
-                        uid: firebaseUser.uid,
-                        email: firebaseUser.email,
-                        displayName: firebaseUser.displayName,
-                        emailVerified: firebaseUser.emailVerified
-                    });
-                    setUser(firebaseUser);
+                const storedUser = localStorage.getItem('user');
+                const storedToken = localStorage.getItem('token');
 
-                    // Get user data from Firestore
-                    console.log('📊 Fetching user data from Firestore...');
-                    try {
-                        const firestoreUserData = await AuthService.getCurrentUserData();
-
-                        if (mounted) {
-                            setUserData(firestoreUserData);
-                            console.log('✅ Firestore data loaded:', firestoreUserData);
-
-                            // Navigate to dashboard only if we're on sign-in page and auth is initialized
-                            if (authInitialized && window.location.pathname === '/auth/signin') {
-                                console.log('🔄 Redirecting to dashboard...');
-                                router.push('/dashboard');
-                            }
-                        }
-                    } catch (firestoreErr) {
-                        console.error('❌ Firestore error:', firestoreErr);
-                        // Don't set error here - user is still authenticated
-                        if (mounted) {
-                            setUserData(null);
-                            console.warn('⚠️ User authenticated but Firestore data unavailable');
-                        }
-                    }
-                } else {
-                    console.log('❌ User not authenticated');
-                    setUser(null);
-                    setUserData(null);
-
-                    // Navigate to sign-in only if we're not already there and auth is initialized
-                    if (authInitialized && window.location.pathname !== '/auth/signin') {
-                        console.log('🔄 Redirecting to sign-in...');
-                        router.push('/auth/signin');
-                    }
+                if (storedUser && storedToken) {
+                    const userData = JSON.parse(storedUser);
+                    setUser(userData);
+                    setToken(storedToken);
+                    console.log('✅ User data loaded from localStorage:', userData);
+                    console.log('✅ Token loaded from localStorage:', storedToken);
+                    console.log('✅ isAuthenticated will be:', !!(userData && storedToken));
                 }
             } catch (err) {
-                console.error('❌ Critical error in auth state change:', err);
-                if (mounted) {
-                    setError(`Authentication error: ${err instanceof Error ? err.message : 'Unknown error'}`);
-                    setUserData(null);
-                }
-            } finally {
-                if (mounted) {
-                    setLoading(false);
-                    if (!authInitialized) {
-                        setAuthInitialized(true);
-                    }
-                }
+                console.error('❌ Error loading stored data:', err);
+                clearStoredData();
             }
-        });
-
-        return () => {
-            mounted = false;
-            unsubscribe();
         };
-    }, [authInitialized, router]);
 
-    const signInWithGoogle = async (): Promise<void> => {
+        loadStoredData();
+    }, []);
+
+    // Charger Google Identity Services
+    useEffect(() => {
+        const loadGoogleScript = () => {
+            if (window.google) {
+                setIsGoogleLoaded(true);
+                return;
+            }
+
+            const script = document.createElement('script');
+            script.src = 'https://accounts.google.com/gsi/client';
+            script.async = true;
+            script.defer = true;
+            script.onload = () => {
+                setIsGoogleLoaded(true);
+                console.log('✅ Google Identity Services loaded');
+            };
+            script.onerror = () => {
+                setError('Failed to load Google Identity Services');
+                console.error('❌ Failed to load Google Identity Services');
+            };
+            document.head.appendChild(script);
+        };
+
+        loadGoogleScript();
+    }, []);
+
+    const clearStoredData = useCallback(() => {
+        localStorage.removeItem('user');
+        localStorage.removeItem('token');
+        setUser(null);
+        setToken(null);
+    }, []);
+
+    const clearError = useCallback((): void => {
+        setError(null);
+    }, []);
+
+    const refreshUserData = useCallback(async (): Promise<void> => {
+        if (!token) return;
+
         try {
-            setError(null);
-            console.log('Starting Google sign-in...');
+            setIsLoading(true);
+            const response = await AuthService.getCurrentUser();
 
-            // Check if we're on mobile for better UX
-            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
-                navigator.userAgent
-            );
-
-            if (isMobile) {
-                await AuthService.signInWithGoogleRedirect();
-            } else {
-                await AuthService.signInWithGoogle();
-                console.log('Google sign-in initiated');
-                // Don't manually redirect here - let the auth state change handle it
+            if (response.success) {
+                const userData = response.data;
+                setUser(userData as User);
+                localStorage.setItem('user', JSON.stringify(userData));
+                console.log('✅ User data refreshed:', userData);
             }
         } catch (err: any) {
-            console.error('Sign-in error:', err);
-            setError(err.message || 'Sign-in error');
-            setLoading(false);
+            console.error('❌ Error refreshing user data:', err);
+            if (err.status === 401) {
+                // Token expiré, déconnecter l'utilisateur
+                signOut();
+            }
+        } finally {
+            setIsLoading(false);
         }
-    };
+    }, [token]);
 
-    const signOut = async (): Promise<void> => {
+    const signInWithGoogle = useCallback(async (): Promise<void> => {
+        if (!isGoogleLoaded) {
+            setError('Google Identity Services not loaded yet');
+            return;
+        }
+
         try {
-            setLoading(true);
+            setIsLoading(true);
             setError(null);
 
-            console.log('Starting sign-out...');
-            await AuthService.signOut();
-            console.log('Sign-out successful');
+            // Utiliser Google Identity Services pour l'authentification
+            const response = await new Promise<any>((resolve, reject) => {
+                window.google.accounts.id.initialize({
+                    client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || 'your-google-client-id',
+                    callback: (response: any) => {
+                        try {
+                            // Décoder le JWT token
+                            const payload = JSON.parse(atob(response.credential.split('.')[1]));
+                            resolve(payload);
+                        } catch (err) {
+                            reject(new Error('Failed to decode Google token'));
+                        }
+                    }
+                });
 
-            // Clear local state immediately
-            setUser(null);
-            setUserData(null);
+                window.google.accounts.id.prompt((notification: any) => {
+                    if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+                        reject(new Error('Google sign-in was cancelled or blocked'));
+                    }
+                });
+            });
 
-            // Redirect to sign-in page
-            router.push('/auth/signin');
+            console.log('✅ Google Auth successful:', response);
+
+            // Envoyer les données à l'API Laravel
+            const contributorData = {
+                name: response.name,
+                email: response.email,
+            };
+
+            console.log('📤 Sending contributor data to API:', contributorData);
+            const apiResponse = await AuthService.loginContributor(contributorData);
+            console.log('📥 API Response:', apiResponse);
+
+            // Le client API retourne seulement data si success=true, sinon data complet
+            // Donc apiResponse contient directement { user, token, token_type }
+            if (apiResponse && apiResponse.user && apiResponse.token) {
+                const { user: userData, token: userToken } = apiResponse;
+
+                // Stocker les données
+                setUser(userData as User);
+                setToken(userToken);
+                localStorage.setItem('user', JSON.stringify(userData));
+                localStorage.setItem('token', userToken);
+
+                console.log('✅ User authenticated:', userData);
+                console.log('✅ Token stored:', userToken);
+                console.log('✅ localStorage user:', localStorage.getItem('user'));
+                console.log('✅ localStorage token:', localStorage.getItem('token'));
+                console.log('✅ isAuthenticated will be:', !!(userData && userToken));
+
+                // Rediriger selon le rôle
+                if (userData.role === 'contributor') {
+                    router.push('/dashboard');
+                } else if (userData.role === 'ngo') {
+                    router.push('/ngo/dashboard');
+                }
+            } else {
+                throw new Error('Authentication failed - invalid response format');
+            }
+
         } catch (err: any) {
-            console.error('Sign-out error:', err);
-            setError(err.message || 'Sign-out error');
+            console.error('❌ Google Auth error:', err);
+            setError(err.message || 'Google authentication failed');
+            throw err;
         } finally {
-            setLoading(false);
+            setIsLoading(false);
         }
-    };
+    }, [isGoogleLoaded, router]);
+
+    const signOut = useCallback(async (): Promise<void> => {
+        try {
+            setIsLoggingOut(true);
+            setError(null);
+
+            // Appeler l'API de déconnexion
+            if (token) {
+                console.log('🔄 Calling logout API...');
+                await AuthService.logout();
+                console.log('✅ Logout API successful');
+            }
+        } catch (err) {
+            console.error('❌ Error during logout:', err);
+            setError('Erreur lors de la déconnexion');
+        } finally {
+            // Nettoyer les données locales
+            clearStoredData();
+            setIsLoggingOut(false);
+
+            // Rediriger vers la page de connexion
+            router.push('/auth/signin');
+        }
+    }, [token, clearStoredData, router]);
 
     return {
         user,
-        userData,
-        loading,
+        token,
+        isAuthenticated: !!user && !!token,
+        isLoading,
+        loading: isLoading || isLoggingOut, // Alias pour compatibilité
         error,
         signInWithGoogle,
         signOut,
-        isAuthenticated: !!user,
         refreshUserData,
         clearError,
+        isGoogleLoaded,
     };
 };

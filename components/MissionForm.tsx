@@ -2,7 +2,7 @@
 
 import Button from "@/components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
-import { useApiAuth } from "@/hooks/useApiAuth";
+import { useAuth } from "@/hooks/useAuth";
 import {
   faImage,
   faMapMarkerAlt,
@@ -25,7 +25,7 @@ interface MissionFormData {
 
 const MissionForm: React.FC = () => {
   const router = useRouter();
-  const { user } = useApiAuth();
+  const { user } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [formData, setFormData] = useState<MissionFormData>({
@@ -39,6 +39,7 @@ const MissionForm: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [useTestMode, setUseTestMode] = useState(false);
 
   // Gérer la sélection de fichier
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -149,7 +150,19 @@ const MissionForm: React.FC = () => {
         address: formData.address,
       };
 
-      const response = await fetch("/api/auth-missions", {
+      console.log("📤 Mission data:", missionData);
+      console.log(
+        "🔑 Token:",
+        localStorage.getItem("token") ? "Present" : "Missing"
+      );
+      console.log("🧪 Test mode:", useTestMode);
+
+      const apiEndpoint = useTestMode
+        ? "/api/test-mission"
+        : "/api/auth-missions";
+      console.log("🌐 API endpoint:", apiEndpoint);
+
+      const response = await fetch(apiEndpoint, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -158,12 +171,22 @@ const MissionForm: React.FC = () => {
         body: JSON.stringify(missionData),
       });
 
+      console.log("📡 Response status:", response.status);
+      console.log(
+        "📡 Response headers:",
+        Object.fromEntries(response.headers.entries())
+      );
+
       if (!response.ok) {
-        const errorData = await response.json();
+        const errorData = await response
+          .json()
+          .catch(() => ({ message: "Failed to parse error response" }));
+        console.error("❌ Error creating mission:", errorData);
         throw new Error(errorData.message || "Failed to create mission");
       }
 
       const result = await response.json();
+      console.log("✅ Mission created successfully:", result);
       setSuccess("Mission proposal submitted successfully!");
 
       // Rediriger vers la page des missions après 2 secondes
@@ -285,6 +308,35 @@ const MissionForm: React.FC = () => {
                     : undefined
                 }
               />
+            </div>
+
+            {/* Mode Test */}
+            <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-yellow-800 dark:text-yellow-200 font-medium">
+                    Test Mode
+                  </p>
+                  <p className="text-sm text-yellow-700 dark:text-yellow-300">
+                    Enable to test mission creation without backend
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setUseTestMode(!useTestMode)}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                    useTestMode
+                      ? "bg-yellow-600"
+                      : "bg-gray-200 dark:bg-gray-700"
+                  }`}
+                >
+                  <span
+                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                      useTestMode ? "translate-x-6" : "translate-x-1"
+                    }`}
+                  />
+                </button>
+              </div>
             </div>
 
             {/* Messages d'erreur et de succès */}

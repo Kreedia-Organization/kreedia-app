@@ -2,20 +2,21 @@
 
 import Button from "@/components/ui/Button";
 import { Card, CardContent } from "@/components/ui/Card";
-import { useApiAuth } from "@/hooks/useApiAuth";
-import { ArrowRight, Building2, Clock } from "lucide-react";
-import Link from "next/link";
+import { useAuth } from "@/hooks/useAuth";
+import { Clock } from "lucide-react";
 import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 
 const ContributorSignInPage: React.FC = () => {
   const router = useRouter();
-  const { signInWithGoogle, loading, error } = useApiAuth();
+  const { signInWithGoogle, isLoading, error, clearError, isGoogleLoaded } =
+    useAuth();
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 
   const handleGoogleSignIn = async () => {
     try {
       setIsGoogleLoading(true);
+      clearError(); // Clear any previous errors
 
       // Use the hook method which handles popup internally and redirects automatically
       await signInWithGoogle();
@@ -36,11 +37,11 @@ const ContributorSignInPage: React.FC = () => {
             <img src="/icon.png" alt="Kreedia Logo" className="h-16 w-16" />
           </div>
           <h2 className="text-3xl font-bold text-foreground">
-            Contributor Sign In
-          </h2>
-          <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
             Sign in with Google to start contributing
-          </p>
+          </h2>
+          {/* <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+            Sign in with Google to start contributing
+          </p> */}
         </div>
 
         {/* Form */}
@@ -66,13 +67,18 @@ const ContributorSignInPage: React.FC = () => {
             {/* Google Sign In Button */}
             <Button
               onClick={handleGoogleSignIn}
-              disabled={isGoogleLoading || loading}
+              disabled={isGoogleLoading || isLoading || !isGoogleLoaded}
               className="w-full flex items-center justify-center space-x-3 py-3"
             >
-              {isGoogleLoading || loading ? (
+              {isGoogleLoading || isLoading ? (
                 <>
                   <Clock className="h-5 w-5 animate-spin" />
                   <span>Signing in...</span>
+                </>
+              ) : !isGoogleLoaded ? (
+                <>
+                  <Clock className="h-5 w-5 animate-spin" />
+                  <span>Loading Google...</span>
                 </>
               ) : (
                 <>
@@ -109,7 +115,7 @@ const ContributorSignInPage: React.FC = () => {
         </Card>
 
         {/* Footer */}
-        <div className="text-center">
+        {/* <div className="text-center">
           <p className="text-sm text-gray-600 dark:text-gray-400">
             Are you an organization?{" "}
             <Link
@@ -121,7 +127,7 @@ const ContributorSignInPage: React.FC = () => {
               <ArrowRight className="h-3 w-3" />
             </Link>
           </p>
-        </div>
+        </div> */}
       </div>
     </div>
   );

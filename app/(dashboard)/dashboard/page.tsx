@@ -4,8 +4,8 @@ import BlockchainTest from "@/components/BlockchainTest";
 import Button from "@/components/ui/Button";
 import { Card, CardContent } from "@/components/ui/Card";
 import WalletConnectPrompt from "@/components/WalletConnectPrompt";
-import { useApiAuth } from "@/hooks/useApiAuth";
 import { useAvailableMissions, useUserMissions } from "@/hooks/useApiMissions";
+import { useAuth } from "@/hooks/useAuth";
 import { useWallet } from "@/hooks/useWallet";
 import { useWalletBalances } from "@/hooks/useWalletBalances";
 import { UserService } from "@/lib/api/services/user";
@@ -17,7 +17,7 @@ import React, { useEffect } from "react";
 const DashboardPage: React.FC = () => {
   const router = useRouter();
   const { address, isConnected } = useWallet();
-  const { user, setUser, forceRefreshUserData } = useApiAuth();
+  const { user, refreshUserData } = useAuth();
 
   // Load user missions
   const { missions: userMissions, loading: userMissionsLoading } =
@@ -45,7 +45,7 @@ const DashboardPage: React.FC = () => {
           const updatedUser = await UserService.updateProfile({
             wallet_address: address,
           });
-          setUser(updatedUser);
+          // Les données seront automatiquement rafraîchies par useAuth
           console.log("✅ User wallet address updated:", updatedUser);
         } catch (error) {
           console.error("❌ Error updating wallet address:", error);
@@ -54,7 +54,7 @@ const DashboardPage: React.FC = () => {
     };
 
     updateUserWallet();
-  }, [address, user, setUser]);
+  }, [address, user, refreshUserData]);
 
   const handleStartMission = (missionId: string) => {
     console.log("Starting mission:", missionId);
@@ -98,7 +98,9 @@ const DashboardPage: React.FC = () => {
     <div className="space-y-8">
       {/* Show wallet connect prompt only if user has no wallet_address */}
       {needsWalletConnection ? (
-        <WalletConnectPrompt />
+        <div className="min-h-[60vh] flex items-center justify-center">
+          <WalletConnectPrompt />
+        </div>
       ) : (
         <>
           {/* Welcome Section */}

@@ -7,14 +7,12 @@ import { useApiAuth } from "@/hooks/useApiAuth";
 import { useWallet } from "@/hooks/useWallet";
 import {
   faBell,
-  faChartLine,
   faChevronRight,
   faCog,
   faGlobe,
   faPalette,
   faShield,
   faSignOutAlt,
-  faTrophy,
   faUser,
   faWallet,
 } from "@fortawesome/free-solid-svg-icons";
@@ -188,89 +186,6 @@ const SettingsPage: React.FC = () => {
           Manage your account settings and preferences
         </p>
       </div>
-
-      {/* User Stats */}
-      {user && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <FontAwesomeIcon
-                icon={faUser}
-                className="h-5 w-5 text-primary-600"
-              />
-              <span>Account Overview</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
-                <div className="flex items-center space-x-2">
-                  <FontAwesomeIcon
-                    icon={faUser}
-                    className="h-5 w-5 text-blue-600"
-                  />
-                  <div>
-                    <p className="text-sm text-blue-600 dark:text-blue-400">
-                      Member Since
-                    </p>
-                    <p className="font-semibold text-blue-900 dark:text-blue-100">
-                      {userStats.joinDate}
-                    </p>
-                  </div>
-                </div>
-              </div>
-              <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg">
-                <div className="flex items-center space-x-2">
-                  <FontAwesomeIcon
-                    icon={faChartLine}
-                    className="h-5 w-5 text-green-600"
-                  />
-                  <div>
-                    <p className="text-sm text-green-600 dark:text-green-400">
-                      Missions Created
-                    </p>
-                    <p className="font-semibold text-green-900 dark:text-green-100">
-                      {userStats.missionsCreated}
-                    </p>
-                  </div>
-                </div>
-              </div>
-              <div className="bg-purple-50 dark:bg-purple-900/20 p-4 rounded-lg">
-                <div className="flex items-center space-x-2">
-                  <FontAwesomeIcon
-                    icon={faTrophy}
-                    className="h-5 w-5 text-purple-600"
-                  />
-                  <div>
-                    <p className="text-sm text-purple-600 dark:text-purple-400">
-                      Missions Completed
-                    </p>
-                    <p className="font-semibold text-purple-900 dark:text-purple-100">
-                      {userStats.missionsCompleted}
-                    </p>
-                  </div>
-                </div>
-              </div>
-              <div className="bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-lg">
-                <div className="flex items-center space-x-2">
-                  <FontAwesomeIcon
-                    icon={faWallet}
-                    className="h-5 w-5 text-yellow-600"
-                  />
-                  <div>
-                    <p className="text-sm text-yellow-600 dark:text-yellow-400">
-                      Total Earnings
-                    </p>
-                    <p className="font-semibold text-yellow-900 dark:text-yellow-100">
-                      ${userStats.totalEarnings}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
 
       {/* Settings Sections */}
       <div className="space-y-6">

@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { Award, Bug, Home, Target, User } from "lucide-react";
+import { Award, Home, Target, User } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import React, { useCallback, useMemo } from "react";
 
@@ -91,9 +91,9 @@ const navItems: NavItem[] = [
   { href: "/missions", label: "Missions", icon: Target },
   { href: "/nft", label: "NFTs", icon: Award },
   { href: "/profile", label: "Profile", icon: User },
-  ...(process.env.NODE_ENV === "development"
-    ? [{ href: "/debug", label: "Debug", icon: Bug }]
-    : []),
+  // ...(process.env.NODE_ENV === "development"
+  //   ? [{ href: "/debug", label: "Debug", icon: Bug }]
+  //   : []),
 ];
 
 const NavBar: React.FC = () => {

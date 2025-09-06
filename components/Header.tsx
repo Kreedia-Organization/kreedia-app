@@ -1,6 +1,6 @@
 "use client";
 
-import { useApiAuth } from "@/hooks/useApiAuth";
+import { useAuth } from "@/hooks/useAuth";
 import { useTheme } from "@/lib/theme-provider";
 import { ArrowRight, Calendar, ChevronDown, Cog } from "lucide-react";
 import Link from "next/link";
@@ -10,7 +10,7 @@ import NotificationDropdown from "./NotificationDropdown";
 import UserAvatar from "./UserAvatar";
 
 const Header: React.FC = () => {
-  const { user, signOut, loading } = useApiAuth();
+  const { user, signOut, loading } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const router = useRouter();
   const [showUserMenu, setShowUserMenu] = useState(false);
@@ -35,8 +35,8 @@ const Header: React.FC = () => {
 
   const handleSignOut = async () => {
     try {
-      await signOut();
       setShowUserMenu(false);
+      await signOut();
     } catch (error) {
       console.error("Sign-out error:", error);
     }

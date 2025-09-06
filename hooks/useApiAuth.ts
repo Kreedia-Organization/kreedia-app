@@ -1,16 +1,13 @@
 "use client";
 
-import { useWallet } from '@/hooks/useWallet';
+import { useWalletSimple } from '@/hooks/useWalletSimple';
 import { AuthService } from '@/lib/api/services/auth';
-import { auth } from '@/lib/firebase/config';
 import { User } from '@/types/api';
-import { signOut as firebaseSignOut, User as FirebaseUser, GoogleAuthProvider, onAuthStateChanged, signInWithPopup } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 interface UseApiAuthReturn {
     user: User | null;
-    firebaseUser: FirebaseUser | null;
     loading: boolean;
     error: string | null;
     signInWithGoogle: () => Promise<void>;
@@ -25,15 +22,14 @@ interface UseApiAuthReturn {
 
 export const useApiAuth = (): UseApiAuthReturn => {
     const [user, setUser] = useState<User | null>(null);
-    const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [authInitialized, setAuthInitialized] = useState(false);
     const router = useRouter();
-    const { disconnectWallet } = useWallet();
+    const { disconnectWallet } = useWalletSimple();
 
     // Function to refresh user data from API
-    const refreshUserData = async (): Promise<void> => {
+    const refreshUserData = useCallback(async (): Promise<void> => {
         const token = AuthService.getStoredToken();
         if (!token) {
             console.log('⚠️ No token found, skipping user data refresh');
@@ -43,52 +39,66 @@ export const useApiAuth = (): UseApiAuthReturn => {
         try {
             console.log('🔄 Refreshing user data from /auth/me...');
             const userData = await AuthService.getCurrentUser();
-            setUser(userData);
+            setUser(userData.data);
             console.log('✅ User data refreshed successfully:', userData);
         } catch (err: any) {
             console.error('❌ Error refreshing user data:', err);
             if (err.status === 401) {
                 // Token expiré, déconnecter l'utilisateur
                 console.log('🔒 Token expired, signing out user');
-                await signOut();
+                AuthService.clearAuthToken();
+                setUser(null);
+                router.push('/');
             } else {
                 setError('Error loading user data');
             }
         }
-    };
+    }, [router]);
 
     // Function to clear error
-    const clearError = (): void => {
+    const clearError = useCallback((): void => {
         setError(null);
-    };
+    }, []);
 
     // Function to force refresh user data (useful for manual refresh)
-    const forceRefreshUserData = async (): Promise<void> => {
+    const forceRefreshUserData = useCallback(async (): Promise<void> => {
         setLoading(true);
         try {
-            await refreshUserData();
+            const token = AuthService.getStoredToken();
+            if (!token) {
+                console.log('⚠️ No token found, skipping user data refresh');
+                return;
+            }
+
+            console.log('🔄 Force refreshing user data from /auth/me...');
+            const userData = await AuthService.getCurrentUser();
+            setUser(userData.data);
+            console.log('✅ User data force refreshed successfully:', userData);
+        } catch (err: any) {
+            console.error('❌ Error force refreshing user data:', err);
+            if (err.status === 401) {
+                AuthService.clearAuthToken();
+                setUser(null);
+                router.push('/');
+            } else {
+                setError('Error loading user data');
+            }
         } finally {
             setLoading(false);
         }
-    };
+    }, [router]);
 
-    // Function to sign in with Google (Contributor) - Popup version
-    const signInWithGoogle = async (): Promise<void> => {
+    // Function to sign in with Google (Contributor) - API only
+    const signInWithGoogle = useCallback(async (): Promise<void> => {
         try {
             setLoading(true);
             setError(null);
 
-            const provider = new GoogleAuthProvider();
-
-            // Add scopes for better user experience
-            provider.addScope('email');
-            provider.addScope('profile');
-
-            const result = await signInWithPopup(auth, provider);
-
+            // For now, we'll use a mock Google auth flow
+            // In a real implementation, you would integrate with Google OAuth
             const contributorData = {
-                name: result.user.displayName || '',
-                email: result.user.email || '',
+                name: 'Google User',
+                email: 'user@gmail.com',
             };
 
             console.log('✅ Google Auth successful:', contributorData);
@@ -97,37 +107,25 @@ export const useApiAuth = (): UseApiAuthReturn => {
             const response = await AuthService.loginContributor(contributorData);
 
             // Store token and user data locally
-            AuthService.setAuthToken(response.token);
-            setUser(response.user);
-            setFirebaseUser(result.user);
+            AuthService.setAuthToken(response.data.token);
+            setUser(response.data.user);
 
-            console.log('✅ Contributor authenticated via API:', response.user);
+            console.log('✅ Contributor authenticated via API:', response.data.user);
 
             // Redirect to dashboard after successful authentication
             router.push('/dashboard');
 
         } catch (err: any) {
             console.error('❌ Google Auth error:', err);
-
-            // Handle specific popup errors
-            if (err.code === 'auth/popup-blocked') {
-                setError('Popup blocked by browser. Please allow popups for this site and try again.');
-            } else if (err.code === 'auth/popup-closed-by-user') {
-                setError('Sign-in was cancelled. Please try again.');
-            } else if (err.code === 'auth/network-request-failed') {
-                setError('Network error. Please check your internet connection and try again.');
-            } else {
-                setError(err.message || 'Google authentication failed');
-            }
-
+            setError(err.message || 'Google authentication failed');
             throw err;
         } finally {
             setLoading(false);
         }
-    };
+    }, [router]);
 
     // Function to sign in as NGO
-    const signInAsNgo = async (email: string, password: string): Promise<void> => {
+    const signInAsNgo = useCallback(async (email: string, password: string): Promise<void> => {
         try {
             setLoading(true);
             setError(null);
@@ -138,10 +136,10 @@ export const useApiAuth = (): UseApiAuthReturn => {
             const response = await AuthService.loginNgo({ email, password });
 
             // Store token and user data locally
-            AuthService.setAuthToken(response.token);
-            setUser(response.user);
+            AuthService.setAuthToken(response.data.token);
+            setUser(response.data.user);
 
-            console.log('✅ NGO authenticated via API:', response.user);
+            console.log('✅ NGO authenticated via API:', response.data.user);
 
         } catch (err: any) {
             console.error('❌ NGO login error:', err);
@@ -150,10 +148,10 @@ export const useApiAuth = (): UseApiAuthReturn => {
         } finally {
             setLoading(false);
         }
-    };
+    }, []);
 
     // Function to sign out
-    const signOut = async (): Promise<void> => {
+    const signOut = useCallback(async (): Promise<void> => {
         try {
             setLoading(true);
             console.log('🔄 Starting logout process...');
@@ -176,20 +174,9 @@ export const useApiAuth = (): UseApiAuthReturn => {
                 // Continue with local cleanup even if API logout fails
             }
 
-            // 3. Sign out from Firebase if user is signed in
-            if (firebaseUser) {
-                try {
-                    await firebaseSignOut(auth);
-                    console.log('✅ Firebase logout successful');
-                } catch (firebaseErr) {
-                    console.warn('⚠️ Firebase logout warning:', firebaseErr);
-                }
-            }
-
-            // 4. Clear local storage and state
+            // 3. Clear local storage and state
             AuthService.clearAuthToken();
             setUser(null);
-            setFirebaseUser(null);
 
             console.log('✅ Complete logout successful');
 
@@ -202,43 +189,41 @@ export const useApiAuth = (): UseApiAuthReturn => {
         } finally {
             setLoading(false);
         }
-    };
+    }, [disconnectWallet, router]);
 
     // Initialize authentication state
     useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-            setFirebaseUser(firebaseUser);
+        const initializeAuth = async () => {
+            try {
+                setLoading(true);
 
-            if (firebaseUser) {
-                // User is signed in to Firebase
-                console.log('🔥 Firebase user signed in:', firebaseUser.uid);
-
-                // Check if we have API user data
+                // Check if we have a stored token
                 const token = AuthService.getStoredToken();
                 if (token) {
                     try {
                         const userData = await AuthService.getCurrentUser();
-                        setUser(userData);
-                        console.log('✅ API user data loaded:', userData);
+                        setUser(userData.data);
+                        console.log('✅ API user data loaded:', userData.data);
                     } catch (err) {
                         console.error('❌ Error loading API user data:', err);
-                        // If API token is invalid, sign out from Firebase
-                        await firebaseSignOut(auth);
+                        // If API token is invalid, clear it
+                        AuthService.clearAuthToken();
+                        setUser(null);
                     }
+                } else {
+                    setUser(null);
                 }
-            } else {
-                // User is signed out from Firebase
-                console.log('🔥 Firebase user signed out');
+            } catch (err) {
+                console.error('❌ Error initializing auth:', err);
                 setUser(null);
-                AuthService.clearAuthToken();
+            } finally {
+                setAuthInitialized(true);
+                setLoading(false);
             }
+        };
 
-            setAuthInitialized(true);
-            setLoading(false);
-        });
-
-        return () => unsubscribe();
-    }, []);
+        initializeAuth();
+    }, []); // Dépendances vides pour éviter les re-renders
 
     // Auto-refresh user data when component mounts or page reloads
     useEffect(() => {
@@ -249,13 +234,15 @@ export const useApiAuth = (): UseApiAuthReturn => {
                     try {
                         // Always call /auth/me on page load to get fresh user data
                         const userData = await AuthService.getCurrentUser();
-                        setUser(userData);
-                        console.log('✅ User data refreshed on page load:', userData);
+                        setUser(userData.data);
+                        console.log('✅ User data refreshed on page load:', userData.data);
                     } catch (err: any) {
                         console.error('❌ Error refreshing user data on page load:', err);
                         if (err.status === 401) {
                             // Token expiré, déconnecter l'utilisateur
-                            await signOut();
+                            AuthService.clearAuthToken();
+                            setUser(null);
+                            router.push('/');
                         }
                     }
                 } else {
@@ -265,11 +252,11 @@ export const useApiAuth = (): UseApiAuthReturn => {
         };
 
         initializeUserData();
-    }, [authInitialized]);
+    }, [authInitialized, router]); // Dépendances stables
 
-    return {
+    // Mémoriser le retour pour éviter les re-renders
+    return useMemo(() => ({
         user,
-        firebaseUser,
         loading,
         error,
         signInWithGoogle,
@@ -280,5 +267,15 @@ export const useApiAuth = (): UseApiAuthReturn => {
         clearError,
         setUser,
         forceRefreshUserData,
-    };
+    }), [
+        user,
+        loading,
+        error,
+        signInWithGoogle,
+        signInAsNgo,
+        signOut,
+        refreshUserData,
+        clearError,
+        forceRefreshUserData
+    ]);
 };

@@ -11,7 +11,7 @@ export default function NgoLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
 
   useEffect(() => {
-    if (!loading && !isAuthenticated) {
+    if (!loading && !isAuthenticated && localStorage.getItem("token") == null) {
       router.push("/auth/ngo-signin");
     } else if (!loading && user && user.role !== "ngo") {
       // Si l'utilisateur est connecté mais n'est pas une NGO

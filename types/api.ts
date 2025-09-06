@@ -8,7 +8,7 @@ export interface User {
     gender?: 'male' | 'female' | 'other' | null;
     wallet_address?: string | null;
     ens_name?: string | null;
-    role: string;
+    role: 'contributor' | 'ngo';
     created_at: string;
     updated_at: string;
 }
@@ -23,9 +23,13 @@ export interface UserStats {
 
 // Types pour l'authentification
 export interface LoginResponse {
-    user: User;
-    token: string;
-    token_type: string;
+    success: boolean;
+    message: string;
+    data: {
+        user: User;
+        token: string;
+        token_type: string;
+    };
 }
 
 export interface RegisterNgoData {
@@ -45,6 +49,14 @@ export interface RegisterContributorData {
     gender?: 'male' | 'female' | 'other';
     wallet_address?: string;
     ens_name?: string;
+}
+
+export interface UpdateProfileData {
+    name?: string;
+    phone?: string;
+    gender?: 'male' | 'female' | 'other';
+    wallet_address?: string | null;
+    ens_name?: string | null;
 }
 
 export interface LoginData {

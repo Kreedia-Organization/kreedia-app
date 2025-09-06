@@ -29,8 +29,8 @@ const NgoMissionsPage: React.FC = () => {
   });
 
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedMission, setSelectedMission] = useState<string | null>(null);
-  const [showAcceptModal, setShowAcceptModal] = useState<string | null>(null);
+  const [selectedMission, setSelectedMission] = useState<number | null>(null);
+  const [showAcceptModal, setShowAcceptModal] = useState<number | null>(null);
 
   // Filter missions by search term
   const filteredMissions = missions.filter((mission) => {
@@ -342,7 +342,7 @@ const NgoMissionsPage: React.FC = () => {
       {/* Modals */}
       {selectedMission && (
         <MissionDetailsModal
-          missionId={selectedMission}
+          missionId={selectedMission?.toString() || ""}
           isOpen={!!selectedMission}
           onClose={() => setSelectedMission(null)}
         />
@@ -350,7 +350,7 @@ const NgoMissionsPage: React.FC = () => {
 
       {showAcceptModal && (
         <AcceptMissionModal
-          missionId={showAcceptModal}
+          missionId={showAcceptModal.toString()}
           isOpen={!!showAcceptModal}
           onClose={() => setShowAcceptModal(null)}
           onSuccess={() => {

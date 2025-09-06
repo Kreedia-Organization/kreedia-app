@@ -1,21 +1,21 @@
 "use client";
 
 import MissionForm from "@/components/MissionForm";
-import { useApiAuth } from "@/hooks/useApiAuth";
+import { useAuth } from "@/hooks/useAuth";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 
 const CreateMissionPage: React.FC = () => {
-  const { user, loading } = useApiAuth();
+  const { user, isLoading } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
-    if (!loading && !user) {
+    if (!isLoading && !user) {
       router.push("/auth/signin");
     }
-  }, [user, loading, router]);
+  }, [user, isLoading, router]);
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">

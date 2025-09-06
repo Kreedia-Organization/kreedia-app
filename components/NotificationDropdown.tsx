@@ -1,7 +1,7 @@
 "use client";
 
 import { useNotifications } from "@/hooks/useNotifications";
-import { Notification, NotificationType } from "@/types/firebase";
+import { Notification } from "@/types/api";
 import { formatDistanceToNow } from "date-fns";
 import { ArrowUpRight, Bell, CheckCheck, Clock } from "lucide-react";
 import Link from "next/link";
@@ -24,7 +24,7 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
     error,
     markAsRead,
     markAllAsRead,
-  } = useNotifications(userId, 20);
+  } = useNotifications(20);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -42,22 +42,14 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
   }, []);
 
   // Get notification icon based on type
-  const getNotificationIcon = (type: NotificationType) => {
+  const getNotificationIcon = (type: string) => {
     switch (type) {
-      case NotificationType.MISSION_ASSIGNED:
-      case NotificationType.MISSION_COMPLETED:
-      case NotificationType.MISSION_APPROVED:
+      case "mission_accepted":
+      case "mission_completed":
+      case "mission_rewarded":
         return "🎯";
-      case NotificationType.REWARD_EARNED:
-        return "💰";
-      case NotificationType.LEVEL_UP:
-        return "⬆️";
-      case NotificationType.BADGE_EARNED:
-        return "🏆";
-      case NotificationType.WELCOME:
-        return "👋";
-      case NotificationType.SYSTEM_UPDATE:
-        return "📢";
+      case "general":
+        return "🔔";
       default:
         return "🔔";
     }
@@ -65,7 +57,7 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
 
   // Get notification color based on priority and read status
   const getNotificationStyle = (notification: Notification) => {
-    if (!notification.isRead) {
+    if (!notification.read_at) {
       return "bg-blue-50 dark:bg-blue-900/20 border-l-4 border-l-blue-500";
     }
     return "bg-gray-50 dark:bg-gray-800/50";
@@ -73,7 +65,7 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
 
   // Handle notification click
   const handleNotificationClick = async (notification: Notification) => {
-    if (!notification.isRead) {
+    if (!notification.read_at) {
       try {
         await markAsRead(notification.id);
       } catch (error) {
@@ -82,7 +74,7 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
     }
 
     // Navigate to action URL if available
-    if (notification.actionUrl) {
+    if (notification.data?.action_url) {
       setIsOpen(false);
     }
   };
@@ -188,7 +180,7 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
                           <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
                             {notification.title}
                           </p>
-                          {!notification.isRead && (
+                          {!notification.read_at && (
                             <div className="flex-shrink-0 ml-2">
                               <div className="h-2 w-2 bg-blue-500 rounded-full"></div>
                             </div>
@@ -202,14 +194,14 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
                         <div className="flex items-center justify-between mt-2">
                           <p className="text-xs text-gray-500 dark:text-gray-500">
                             {formatDistanceToNow(
-                              notification.createdAt.toDate(),
+                              new Date(notification.created_at),
                               { addSuffix: true }
                             )}
                           </p>
 
-                          {notification.actionUrl && (
+                          {notification.data?.action_url && (
                             <Link
-                              href={notification.actionUrl}
+                              href={notification.data.action_url}
                               onClick={() => setIsOpen(false)}
                               className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 flex items-center space-x-1"
                             >

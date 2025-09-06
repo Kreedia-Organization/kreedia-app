@@ -25,8 +25,8 @@ export class AuthService {
         return apiClient.post<LoginResponse>(API_ENDPOINTS.AUTH.CONTRIBUTOR_LOGIN, data);
     }
 
-    static async getCurrentUser(): Promise<User> {
-        return apiClient.get<User>(API_ENDPOINTS.AUTH.ME);
+    static async getCurrentUser(): Promise<{ success: boolean; data: User }> {
+        return apiClient.get<{ success: boolean; data: User }>(API_ENDPOINTS.AUTH.ME);
     }
 
     static async logout(): Promise<void> {
