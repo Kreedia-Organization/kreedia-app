@@ -188,6 +188,8 @@ export interface MissionQueryParams extends PaginationParams {
     latitude?: number;
     longitude?: number;
     radius?: number;
+    proposerId?: string;
+    isVisible?: boolean;
 }
 
 // Types pour les réponses paginées
