@@ -60,7 +60,7 @@ interface UseAuthReturn {
     signOut: () => void;
     refreshUserData: () => Promise<void>;
     clearError: () => void;
-    isGoogleLoaded: boolean;
+    isGoogleLoaded: boolean; // Gardé pour compatibilité
 }
 
 export const useAuth = (): UseAuthReturn => {
@@ -69,7 +69,7 @@ export const useAuth = (): UseAuthReturn => {
     const [isLoading, setIsLoading] = useState(false);
     const [isLoggingOut, setIsLoggingOut] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [isGoogleLoaded, setIsGoogleLoaded] = useState(false);
+    const [isGoogleLoaded] = useState(true); // Toujours true pour la simulation
     const router = useRouter();
 
     // Charger les données depuis localStorage au montage
@@ -94,32 +94,6 @@ export const useAuth = (): UseAuthReturn => {
         };
 
         loadStoredData();
-    }, []);
-
-    // Charger Google Identity Services
-    useEffect(() => {
-        const loadGoogleScript = () => {
-            if (window.google) {
-                setIsGoogleLoaded(true);
-                return;
-            }
-
-            const script = document.createElement('script');
-            script.src = 'https://accounts.google.com/gsi/client';
-            script.async = true;
-            script.defer = true;
-            script.onload = () => {
-                setIsGoogleLoaded(true);
-                console.log('✅ Google Identity Services loaded');
-            };
-            script.onerror = () => {
-                setError('Failed to load Google Identity Services');
-                console.error('❌ Failed to load Google Identity Services');
-            };
-            document.head.appendChild(script);
-        };
-
-        loadGoogleScript();
     }, []);
 
     const clearStoredData = useCallback(() => {
@@ -158,79 +132,147 @@ export const useAuth = (): UseAuthReturn => {
     }, [token]);
 
     const signInWithGoogle = useCallback(async (): Promise<void> => {
-        if (!isGoogleLoaded) {
-            setError('Google Identity Services not loaded yet');
-            return;
-        }
-
         try {
             setIsLoading(true);
             setError(null);
 
-            // Utiliser une approche plus simple et fiable
+            // Simulation de sélection de compte Gmail
+            const mockAccounts = [
+                { name: 'Parfait', email: 'parfait@gmail.com' },
+                { name: 'Pakou', email: 'pakou@gmail.com' },
+                { name: 'Moukitat', email: 'moukitat@gmail.com' }
+            ];
+
+            // Créer le popup de sélection de compte
             const response = await new Promise<any>((resolve, reject) => {
-                // Initialiser Google Identity Services
-                window.google.accounts.id.initialize({
-                    client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || 'your-google-client-id',
-                    callback: (response: any) => {
-                        try {
-                            // Décoder le JWT token
-                            const payload = JSON.parse(atob(response.credential.split('.')[1]));
-                            resolve(payload);
-                        } catch (err) {
-                            reject(new Error('Failed to decode Google token'));
-                        }
-                    },
-                    auto_select: false,
-                    cancel_on_tap_outside: false
+                // Créer le modal
+                const modal = document.createElement('div');
+                modal.style.cssText = `
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    background: rgba(0, 0, 0, 0.5);
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    z-index: 10000;
+                `;
+
+                // Créer le contenu du modal
+                const modalContent = document.createElement('div');
+                modalContent.style.cssText = `
+                    background: white;
+                    border-radius: 12px;
+                    padding: 24px;
+                    max-width: 400px;
+                    width: 90%;
+                    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+                    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                `;
+
+                modalContent.innerHTML = `
+                    <div style="text-align: center; margin-bottom: 24px;">
+                        <div style="width: 40px; height: 40px; background: #4285f4; border-radius: 50%; margin: 0 auto 16px; display: flex; align-items: center; justify-content: center;">
+                            <span style="color: white; font-weight: bold; font-size: 18px;">G</span>
+                        </div>
+                        <h2 style="margin: 0; color: #202124; font-size: 20px; font-weight: 400;">Choisir un compte</h2>
+                        <p style="margin: 8px 0 0; color: #5f6368; font-size: 14px;">Pour continuer vers Kreedia</p>
+                    </div>
+                    <div style="margin-bottom: 16px;">
+                        ${mockAccounts.map((account, index) => `
+                            <div 
+                                id="account-${index}"
+                                style="
+                                    display: flex;
+                                    align-items: center;
+                                    padding: 12px;
+                                    border-radius: 8px;
+                                    cursor: pointer;
+                                    transition: background-color 0.2s;
+                                    border: 1px solid #e0e0e0;
+                                    margin-bottom: 8px;
+                                "
+                                onmouseover="this.style.backgroundColor='#f8f9fa'"
+                                onmouseout="this.style.backgroundColor='white'"
+                            >
+                                <div style="width: 32px; height: 32px; background: #4285f4; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-right: 12px;">
+                                    <span style="color: white; font-weight: bold; font-size: 14px;">${account.name.charAt(0)}</span>
+                                </div>
+                                <div>
+                                    <div style="font-weight: 500; color: #202124; font-size: 14px;">${account.name}</div>
+                                    <div style="color: #5f6368; font-size: 12px;">${account.email}</div>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                    <div style="text-align: center; padding-top: 16px; border-top: 1px solid #e0e0e0;">
+                        <button 
+                            id="cancel-btn"
+                            style="
+                                background: none;
+                                border: none;
+                                color: #5f6368;
+                                cursor: pointer;
+                                padding: 8px 16px;
+                                border-radius: 4px;
+                                font-size: 14px;
+                            "
+                            onmouseover="this.style.backgroundColor='#f8f9fa'"
+                            onmouseout="this.style.backgroundColor='transparent'"
+                        >
+                            Annuler
+                        </button>
+                    </div>
+                `;
+
+                modal.appendChild(modalContent);
+                document.body.appendChild(modal);
+
+                // Gérer la sélection de compte
+                const handleAccountSelect = (account: any) => {
+                    document.body.removeChild(modal);
+                    resolve(account);
+                };
+
+                // Gérer l'annulation
+                const handleCancel = () => {
+                    document.body.removeChild(modal);
+                    reject(new Error('Google sign-in was cancelled'));
+                };
+
+                // Ajouter les event listeners
+                mockAccounts.forEach((account, index) => {
+                    const accountElement = document.getElementById(`account-${index}`);
+                    if (accountElement) {
+                        accountElement.addEventListener('click', () => handleAccountSelect(account));
+                    }
                 });
 
-                // Créer un bouton temporaire et le cliquer
-                const tempDiv = document.createElement('div');
-                tempDiv.style.position = 'fixed';
-                tempDiv.style.top = '-1000px';
-                tempDiv.style.left = '-1000px';
-                tempDiv.style.visibility = 'hidden';
-                document.body.appendChild(tempDiv);
+                const cancelBtn = document.getElementById('cancel-btn');
+                if (cancelBtn) {
+                    cancelBtn.addEventListener('click', handleCancel);
+                }
 
-                // Rendre le bouton Google
-                window.google.accounts.id.renderButton(tempDiv, {
-                    theme: 'outline',
-                    size: 'large',
-                    type: 'standard',
-                    shape: 'rectangular',
-                    text: 'signin_with',
-                    width: 200
+                // Fermer en cliquant à l'extérieur
+                modal.addEventListener('click', (e) => {
+                    if (e.target === modal) {
+                        handleCancel();
+                    }
                 });
 
-                // Attendre que le bouton soit rendu et le cliquer
-                setTimeout(() => {
-                    const button = tempDiv.querySelector('div[role="button"]') as HTMLElement;
-                    if (button) {
-                        button.click();
-                    } else {
-                        // Fallback: essayer prompt
-                        try {
-                            window.google.accounts.id.prompt((notification: any) => {
-                                if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
-                                    reject(new Error('Google sign-in was cancelled or blocked'));
-                                }
-                            });
-                        } catch (promptError) {
-                            reject(new Error('Google sign-in is not available. Please check your browser settings and try again.'));
-                        }
+                // Fermer avec Escape
+                const handleEscape = (e: KeyboardEvent) => {
+                    if (e.key === 'Escape') {
+                        handleCancel();
+                        document.removeEventListener('keydown', handleEscape);
                     }
-                }, 100);
-
-                // Nettoyer après 10 secondes
-                setTimeout(() => {
-                    if (document.body.contains(tempDiv)) {
-                        document.body.removeChild(tempDiv);
-                    }
-                }, 10000);
+                };
+                document.addEventListener('keydown', handleEscape);
             });
 
-            console.log('✅ Google Auth successful:', response);
+            console.log('✅ Google Auth simulation successful:', response);
 
             // Envoyer les données à l'API Laravel
             const contributorData = {
@@ -276,7 +318,7 @@ export const useAuth = (): UseAuthReturn => {
         } finally {
             setIsLoading(false);
         }
-    }, [isGoogleLoaded, router]);
+    }, [router]);
 
     const signOut = useCallback(async (): Promise<void> => {
         try {
