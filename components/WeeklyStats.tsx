@@ -1,4 +1,5 @@
-import { Camera, Leaf, Trophy } from "lucide-react";
+import { faCamera, faLeaf, faTrophy } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/Card";
 
@@ -17,21 +18,21 @@ const WeeklyStats: React.FC<WeeklyStatsProps> = ({
     {
       title: "Missions Completed",
       value: missionsCompleted,
-      icon: Trophy,
+      icon: faTrophy,
       color: "text-yellow-500",
       bgColor: "bg-yellow-50 dark:bg-yellow-950",
     },
     {
       title: "Areas Impacted",
       value: areasImpacted,
-      icon: Leaf,
+      icon: faLeaf,
       color: "text-primary-500",
       bgColor: "bg-primary-50 dark:bg-primary-950",
     },
     {
       title: "Photos Submitted",
       value: photosSubmitted,
-      icon: Camera,
+      icon: faCamera,
       color: "text-blue-500",
       bgColor: "bg-blue-50 dark:bg-blue-950",
     },
@@ -48,7 +49,10 @@ const WeeklyStats: React.FC<WeeklyStatsProps> = ({
             <div
               className={`h-8 w-8 rounded-lg ${stat.bgColor} flex items-center justify-center`}
             >
-              <stat.icon className={`h-4 w-4 ${stat.color}`} />
+              <FontAwesomeIcon
+                icon={stat.icon}
+                className={`h-4 w-4 ${stat.color}`}
+              />
             </div>
           </CardHeader>
           <CardContent>

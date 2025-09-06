@@ -1,17 +1,7 @@
 "use client";
 
-import { db } from '@/lib/firebase/config';
-import { NotificationService } from '@/lib/firebase/services/notifications';
-import { COLLECTIONS, Notification } from '@/types/firebase';
-import {
-    collection,
-    limit,
-    onSnapshot,
-    orderBy,
-    query,
-    Unsubscribe,
-    where
-} from 'firebase/firestore';
+import { NotificationService } from '@/lib/api/services/notifications';
+import { Notification } from '@/types/api';
 import { useEffect, useState } from 'react';
 
 interface UseNotificationsReturn {
@@ -21,32 +11,48 @@ interface UseNotificationsReturn {
     error: string | null;
     markAsRead: (notificationId: string) => Promise<void>;
     markAllAsRead: () => Promise<void>;
-    refreshNotifications: () => void;
+    refreshNotifications: () => Promise<void>;
+    loadMore: () => Promise<void>;
+    hasMore: boolean;
+    currentPage: number;
+    totalPages: number;
 }
 
 export const useNotifications = (
-    userId: string | null,
-    limitCount: number = 10,
-    realTime: boolean = true
+    limitCount: number = 10
 ): UseNotificationsReturn => {
     const [notifications, setNotifications] = useState<Notification[]>([]);
     const [unreadCount, setUnreadCount] = useState(0);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [hasMore, setHasMore] = useState(true);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(0);
 
     // Function to refresh notifications manually
     const refreshNotifications = async () => {
-        if (!userId) return;
-
         try {
             setLoading(true);
             setError(null);
 
-            const notifs = await NotificationService.getUserNotifications(userId, limitCount);
-            const unread = await NotificationService.getUnreadCount(userId);
+            const response = await NotificationService.getNotifications({
+                per_page: limitCount,
+                page: 1
+            });
+            const unreadResponse = await NotificationService.getUnreadCount();
 
-            setNotifications(notifs);
-            setUnreadCount(unread);
+            setNotifications(response.data);
+            setUnreadCount(unreadResponse.unread_count);
+            setCurrentPage(response.current_page);
+            setTotalPages(response.last_page);
+            setHasMore(response.current_page < response.last_page);
+
+            console.log('✅ Notifications refreshed:', {
+                count: response.data.length,
+                page: response.current_page,
+                total: response.total,
+                unread: unreadResponse.unread_count
+            });
         } catch (err) {
             console.error('Error refreshing notifications:', err);
             setError(err instanceof Error ? err.message : 'Failed to load notifications');
@@ -55,90 +61,10 @@ export const useNotifications = (
         }
     };
 
-    // Real-time notifications listener
+    // Load notifications on mount
     useEffect(() => {
-        if (!userId) {
-            setNotifications([]);
-            setUnreadCount(0);
-            setLoading(false);
-            return;
-        }
-
-        setLoading(true);
-        setError(null);
-
-        let unsubscribeNotifications: Unsubscribe;
-        let unsubscribeUnreadCount: Unsubscribe;
-
-        if (realTime) {
-            // Real-time notifications query
-            const notificationsQuery = query(
-                collection(db, COLLECTIONS.NOTIFICATIONS),
-                where('userId', '==', userId),
-                orderBy('createdAt', 'desc'),
-                limit(limitCount)
-            );
-
-            // Real-time unread count query
-            const unreadQuery = query(
-                collection(db, COLLECTIONS.NOTIFICATIONS),
-                where('userId', '==', userId),
-                where('isRead', '==', false)
-            );
-
-            try {
-                // Listen to notifications
-                unsubscribeNotifications = onSnapshot(
-                    notificationsQuery,
-                    (snapshot) => {
-                        const notifs: Notification[] = [];
-                        snapshot.forEach((doc) => {
-                            notifs.push({ id: doc.id, ...doc.data() } as Notification);
-                        });
-
-                        setNotifications(notifs);
-                        setLoading(false);
-                        console.log(`📬 Real-time notifications updated: ${notifs.length} notifications`);
-                    },
-                    (err) => {
-                        console.error('Error in notifications listener:', err);
-                        setError(err.message);
-                        setLoading(false);
-                    }
-                );
-
-                // Listen to unread count
-                unsubscribeUnreadCount = onSnapshot(
-                    unreadQuery,
-                    (snapshot) => {
-                        setUnreadCount(snapshot.size);
-                        console.log(`🔔 Unread count updated: ${snapshot.size}`);
-                    },
-                    (err) => {
-                        console.error('Error in unread count listener:', err);
-                    }
-                );
-
-            } catch (err) {
-                console.error('Error setting up notifications listeners:', err);
-                setError(err instanceof Error ? err.message : 'Failed to setup listeners');
-                setLoading(false);
-            }
-        } else {
-            // One-time fetch
-            refreshNotifications();
-        }
-
-        // Cleanup function
-        return () => {
-            if (unsubscribeNotifications) {
-                unsubscribeNotifications();
-            }
-            if (unsubscribeUnreadCount) {
-                unsubscribeUnreadCount();
-            }
-        };
-    }, [userId, limitCount, realTime]);
+        refreshNotifications();
+    }, [limitCount]);
 
     // Mark notification as read
     const markAsRead = async (notificationId: string): Promise<void> => {
@@ -149,7 +75,7 @@ export const useNotifications = (
             setNotifications(prev =>
                 prev.map(notif =>
                     notif.id === notificationId
-                        ? { ...notif, isRead: true }
+                        ? { ...notif, read_at: new Date().toISOString() }
                         : notif
                 )
             );
@@ -166,14 +92,12 @@ export const useNotifications = (
 
     // Mark all notifications as read
     const markAllAsRead = async (): Promise<void> => {
-        if (!userId) return;
-
         try {
-            await NotificationService.markAllAsRead(userId);
+            await NotificationService.markAllAsRead();
 
             // Update local state optimistically
             setNotifications(prev =>
-                prev.map(notif => ({ ...notif, isRead: true }))
+                prev.map(notif => ({ ...notif, read_at: new Date().toISOString() }))
             );
             setUnreadCount(0);
 
@@ -181,6 +105,31 @@ export const useNotifications = (
         } catch (err) {
             console.error('Error marking all notifications as read:', err);
             throw err;
+        }
+    };
+
+    // Load more notifications
+    const loadMore = async () => {
+        if (!hasMore || loading) return;
+
+        try {
+            const nextPage = currentPage + 1;
+            const response = await NotificationService.getNotifications({
+                per_page: limitCount,
+                page: nextPage
+            });
+
+            setNotifications(prev => [...prev, ...response.data]);
+            setCurrentPage(response.current_page);
+            setHasMore(response.current_page < response.last_page);
+
+            console.log('✅ More notifications loaded:', {
+                count: response.data.length,
+                page: response.current_page,
+                total: response.total
+            });
+        } catch (err) {
+            console.error('Error loading more notifications:', err);
         }
     };
 
@@ -192,5 +141,9 @@ export const useNotifications = (
         markAsRead,
         markAllAsRead,
         refreshNotifications,
+        loadMore,
+        hasMore,
+        currentPage,
+        totalPages,
     };
 };

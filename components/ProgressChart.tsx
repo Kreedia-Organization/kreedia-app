@@ -1,6 +1,7 @@
 "use client";
 
-import { TrendingUp } from "lucide-react";
+import { faChartLine } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import React from "react";
 import {
   CartesianGrid,
@@ -38,7 +39,10 @@ const ProgressChart: React.FC<ProgressChartProps> = ({
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center space-x-2">
-          <TrendingUp className="h-5 w-5 text-primary-500" />
+          <FontAwesomeIcon
+            icon={faChartLine}
+            className="h-5 w-5 text-primary-500"
+          />
           <span>Earnings Progress</span>
         </CardTitle>
       </CardHeader>

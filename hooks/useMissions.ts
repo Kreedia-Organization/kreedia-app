@@ -1,14 +1,11 @@
 "use client";
 
-import { MissionService } from '@/lib/firebase/services/missions';
-import { COLLECTIONS, Mission, MissionLevel, MissionStatus } from '@/types/firebase';
-import { limit, orderBy, where } from 'firebase/firestore';
+import { MissionService } from '@/lib/api/services/missions';
+import { Mission, MissionStatus } from '@/types/api';
 import { useEffect, useState } from 'react';
-import { useFirestore } from './useFirestore';
 
 interface UseMissionsOptions {
     status?: MissionStatus;
-    level?: MissionLevel;
     proposerId?: string;
     isVisible?: boolean;
     limit?: number;
@@ -27,50 +24,70 @@ interface UseMissionsReturn {
 export const useMissions = (options: UseMissionsOptions = {}): UseMissionsReturn => {
     const {
         status,
-        level,
         proposerId,
         isVisible,
         limit: limitCount = 20,
         enabled = true
     } = options;
 
+    const [missions, setMissions] = useState<Mission[]>([]);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
     const [hasMore, setHasMore] = useState(true);
     const [lastDoc, setLastDoc] = useState<any>(null);
 
-    // Build Firestore query constraints
-    const constraints = [];
+    // Fetch missions from API
+    const fetchMissions = async () => {
+        if (!enabled) return;
 
-    if (status) constraints.push(where('status', '==', status));
-    if (level) constraints.push(where('level', '==', level));
-    if (proposerId) constraints.push(where('proposerId', '==', proposerId));
-    if (isVisible !== undefined) constraints.push(where('isVisible', '==', isVisible));
+        try {
+            setLoading(true);
+            setError(null);
 
-    constraints.push(orderBy('createdAt', 'desc'));
-    constraints.push(limit(limitCount));
+            const response = await MissionService.getAllMissions({
+                status,
+                proposerId,
+                isVisible,
+                per_page: limitCount,
+                page: 1
+            });
 
-    const { data: missions, loading, error, refetch } = useFirestore<Mission>(
-        COLLECTIONS.MISSIONS,
-        { constraints, enabled }
-    );
+            setMissions(response.data);
+            setHasMore(response.current_page < response.last_page);
+        } catch (err: any) {
+            console.error('Error fetching missions:', err);
+            setError(err.message || 'Failed to fetch missions');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const refetch = () => {
+        setHasMore(true);
+        fetchMissions();
+    };
+
+    useEffect(() => {
+        fetchMissions();
+    }, [status, proposerId, isVisible, limitCount, enabled]);
 
     const loadMore = async () => {
         if (!hasMore || loading) return;
 
         try {
-            const { missions: newMissions, lastDoc: newLastDoc } = await MissionService.getMissions({
+            const response = await MissionService.getAllMissions({
                 status,
-                level,
                 proposerId,
                 isVisible,
-                limit: limitCount,
-                lastDoc
+                per_page: limitCount,
+                page: Math.floor(missions.length / limitCount) + 1
             });
 
-            if (newMissions.length < limitCount) {
+            if (response.data.length < limitCount) {
                 setHasMore(false);
             }
 
-            setLastDoc(newLastDoc);
+            setMissions(prev => [...prev, ...response.data]);
         } catch (err) {
             console.error('Error loading more missions:', err);
         }
@@ -88,7 +105,7 @@ export const useMissions = (options: UseMissionsOptions = {}): UseMissionsReturn
 
 export const useAvailableMissions = (limitCount = 20) => {
     return useMissions({
-        status: MissionStatus.ACTIVE,
+        status: 'pending',
         isVisible: true,
         limit: limitCount
     });

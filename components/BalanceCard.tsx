@@ -1,5 +1,6 @@
 import { formatCurrency } from "@/lib/utils";
-import { TrendingUp, Wallet } from "lucide-react";
+import { faArrowTrendUp, faWallet } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/Card";
 
@@ -22,14 +23,15 @@ const BalanceCard: React.FC<BalanceCardProps> = ({
         <CardTitle className="text-sm font-medium text-primary-100">
           Total Balance
         </CardTitle>
-        <Wallet className="h-4 w-4 text-primary-200" />
+        <FontAwesomeIcon icon={faWallet} className="h-4 w-4 text-primary-200" />
       </CardHeader>
       <CardContent>
         <div className="text-3xl font-bold mb-2">
           {formatCurrency(totalBalance, currency)}
         </div>
         <div className="flex items-center space-x-2 text-primary-100">
-          <TrendingUp
+          <FontAwesomeIcon
+            icon={faArrowTrendUp}
             className={`h-4 w-4 ${
               isPositiveGrowth ? "text-green-300" : "text-red-300"
             }`}

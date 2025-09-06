@@ -3,26 +3,39 @@
 import { Badge } from "@/components/ui/Badge";
 import Button from "@/components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
-import { useAuth } from "@/hooks/useAuth";
+import { useApiAuth } from "@/hooks/useApiAuth";
 import { useWallet } from "@/hooks/useWallet";
 import {
-  Bell,
-  ChevronRight,
-  Globe,
-  LogOut,
-  Palette,
-  Settings as SettingsIcon,
-  Shield,
-  User,
-  Wallet,
-} from "lucide-react";
+  faBell,
+  faChevronRight,
+  faCog,
+  faGlobe,
+  faPalette,
+  faShield,
+  faSignOutAlt,
+  faUser,
+  faWallet,
+} from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useRouter } from "next/navigation";
-import React from "react";
+import React, { useEffect, useState } from "react";
 
 const SettingsPage: React.FC = () => {
-  const { user, userData, signOut, loading } = useAuth();
+  const { user, signOut, loading } = useApiAuth();
   const { address, isConnected, disconnectWallet } = useWallet();
   const router = useRouter();
+  const [userStats, setUserStats] = useState({
+    missionsCreated: 0,
+    missionsCompleted: 0,
+    totalEarnings: 0,
+    joinDate: "",
+  });
+  const [preferences, setPreferences] = useState({
+    notifications: true,
+    darkMode: false,
+    language: "en",
+    emailUpdates: true,
+  });
 
   const handleSignOut = async () => {
     try {
@@ -41,16 +54,47 @@ const SettingsPage: React.FC = () => {
     }
   };
 
+  // Charger les statistiques utilisateur
+  useEffect(() => {
+    const loadUserStats = async () => {
+      if (user) {
+        try {
+          // Simuler le chargement des statistiques
+          setUserStats({
+            missionsCreated: 5,
+            missionsCompleted: 3,
+            totalEarnings: 150.5,
+            joinDate: user.created_at
+              ? new Date(user.created_at).toLocaleDateString()
+              : "Unknown",
+          });
+        } catch (error) {
+          console.error("Error loading user stats:", error);
+        }
+      }
+    };
+
+    loadUserStats();
+  }, [user]);
+
+  // Gérer les changements de préférences
+  const handlePreferenceChange = (key: string, value: any) => {
+    setPreferences((prev) => ({
+      ...prev,
+      [key]: value,
+    }));
+  };
+
   const settingsSections = [
     {
       title: "Account",
-      icon: User,
+      icon: faUser,
       items: [
         {
           title: "Profile Information",
           description: "Manage your personal details and profile picture",
           href: "/profile",
-          icon: User,
+          icon: faUser,
         },
         {
           title: "Wallet Connection",
@@ -60,7 +104,7 @@ const SettingsPage: React.FC = () => {
           action: isConnected
             ? handleDisconnectWallet
             : () => router.push("/dashboard"),
-          icon: Wallet,
+          icon: faWallet,
           badge: isConnected ? "Connected" : "Not Connected",
           badgeColor: isConnected ? "green" : "gray",
         },
@@ -68,47 +112,56 @@ const SettingsPage: React.FC = () => {
     },
     {
       title: "Preferences",
-      icon: Palette,
+      icon: faPalette,
       items: [
         {
           title: "Notifications",
           description: "Manage your notification preferences",
-          href: "/settings/notifications",
-          icon: Bell,
+          icon: faBell,
+          toggle: preferences.notifications,
+          onToggle: () =>
+            handlePreferenceChange("notifications", !preferences.notifications),
         },
         {
-          title: "Appearance",
-          description: "Customize the look and feel",
-          href: "/settings/appearance",
-          icon: Palette,
+          title: "Dark Mode",
+          description: "Toggle dark mode appearance",
+          icon: faPalette,
+          toggle: preferences.darkMode,
+          onToggle: () =>
+            handlePreferenceChange("darkMode", !preferences.darkMode),
         },
         {
           title: "Language & Region",
           description: "Set your language and regional preferences",
-          href: "/settings/language",
-          icon: Globe,
+          icon: faGlobe,
+          value: preferences.language === "en" ? "English" : "Français",
+          onSelect: () =>
+            handlePreferenceChange(
+              "language",
+              preferences.language === "en" ? "fr" : "en"
+            ),
         },
       ],
     },
     {
       title: "Security & Privacy",
-      icon: Shield,
+      icon: faShield,
       items: [
         {
           title: "Privacy Settings",
           description: "Control your data and privacy",
           href: "/settings/privacy",
-          icon: Shield,
+          icon: faShield,
         },
         {
           title: "Security",
           description: "Manage your account security",
           href: "/settings/security",
-          icon: Shield,
+          icon: faShield,
         },
       ],
     },
-  ];
+  ] as const;
 
   const getBadgeColor = (color: string) => {
     switch (color) {
@@ -126,7 +179,7 @@ const SettingsPage: React.FC = () => {
       {/* Header */}
       <div>
         <h1 className="text-3xl font-bold text-foreground flex items-center space-x-3">
-          <SettingsIcon className="h-8 w-8 text-primary-600" />
+          <FontAwesomeIcon icon={faCog} className="h-8 w-8 text-primary-600" />
           <span>Settings</span>
         </h1>
         <p className="text-gray-600 dark:text-gray-400 mt-2">
@@ -140,7 +193,10 @@ const SettingsPage: React.FC = () => {
           <Card key={sectionIndex}>
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
-                <section.icon className="h-5 w-5 text-primary-600" />
+                <FontAwesomeIcon
+                  icon={section.icon}
+                  className="h-5 w-5 text-primary-600"
+                />
                 <span>{section.title}</span>
               </CardTitle>
             </CardHeader>
@@ -152,16 +208,23 @@ const SettingsPage: React.FC = () => {
                 >
                   <div className="flex items-center space-x-3 flex-1">
                     <div className="w-10 h-10 bg-gray-100 dark:bg-gray-800 rounded-lg flex items-center justify-center">
-                      <item.icon className="h-5 w-5 text-gray-600 dark:text-gray-400" />
+                      <FontAwesomeIcon
+                        icon={item.icon}
+                        className="h-5 w-5 text-gray-600 dark:text-gray-400"
+                      />
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center space-x-2">
                         <h3 className="font-medium text-foreground">
                           {item.title}
                         </h3>
-                        {item.badge && (
+                        {"badge" in item && item.badge && (
                           <Badge
-                            className={getBadgeColor(item.badgeColor || "gray")}
+                            className={getBadgeColor(
+                              ("badgeColor" in item
+                                ? item.badgeColor
+                                : "gray") || "gray"
+                            )}
                           >
                             {item.badge}
                           </Badge>
@@ -173,7 +236,35 @@ const SettingsPage: React.FC = () => {
                     </div>
                   </div>
                   <div className="flex items-center space-x-2">
-                    {item.href ? (
+                    {"toggle" in item && item.toggle !== undefined ? (
+                      <button
+                        onClick={item.onToggle}
+                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                          item.toggle
+                            ? "bg-green-600"
+                            : "bg-gray-200 dark:bg-gray-700"
+                        }`}
+                      >
+                        <span
+                          className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                            item.toggle ? "translate-x-6" : "translate-x-1"
+                          }`}
+                        />
+                      </button>
+                    ) : "value" in item && item.value ? (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={item.onSelect}
+                        className="flex items-center space-x-1"
+                      >
+                        <span>{item.value}</span>
+                        <FontAwesomeIcon
+                          icon={faChevronRight}
+                          className="h-4 w-4"
+                        />
+                      </Button>
+                    ) : "href" in item && item.href ? (
                       <Button
                         variant="ghost"
                         size="sm"
@@ -181,9 +272,12 @@ const SettingsPage: React.FC = () => {
                         className="flex items-center space-x-1"
                       >
                         <span>Open</span>
-                        <ChevronRight className="h-4 w-4" />
+                        <FontAwesomeIcon
+                          icon={faChevronRight}
+                          className="h-4 w-4"
+                        />
                       </Button>
-                    ) : item.action ? (
+                    ) : "action" in item && item.action ? (
                       <Button
                         variant="ghost"
                         size="sm"
@@ -191,7 +285,10 @@ const SettingsPage: React.FC = () => {
                         className="flex items-center space-x-1"
                       >
                         <span>{isConnected ? "Disconnect" : "Connect"}</span>
-                        <ChevronRight className="h-4 w-4" />
+                        <FontAwesomeIcon
+                          icon={faChevronRight}
+                          className="h-4 w-4"
+                        />
                       </Button>
                     ) : null}
                   </div>
@@ -206,7 +303,7 @@ const SettingsPage: React.FC = () => {
       <Card className="border-red-200 dark:border-red-800">
         <CardHeader>
           <CardTitle className="flex items-center space-x-2 text-red-600 dark:text-red-400">
-            <LogOut className="h-5 w-5" />
+            <FontAwesomeIcon icon={faSignOutAlt} className="h-5 w-5" />
             <span>Danger Zone</span>
           </CardTitle>
         </CardHeader>
@@ -214,7 +311,10 @@ const SettingsPage: React.FC = () => {
           <div className="flex items-center justify-between p-3 rounded-lg bg-red-50 dark:bg-red-900/20">
             <div className="flex items-center space-x-3">
               <div className="w-10 h-10 bg-red-100 dark:bg-red-900 rounded-lg flex items-center justify-center">
-                <LogOut className="h-5 w-5 text-red-600 dark:text-red-400" />
+                <FontAwesomeIcon
+                  icon={faSignOutAlt}
+                  className="h-5 w-5 text-red-600 dark:text-red-400"
+                />
               </div>
               <div>
                 <h3 className="font-medium text-red-900 dark:text-red-100">
