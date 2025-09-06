@@ -67,6 +67,7 @@ export const useAuth = (): UseAuthReturn => {
     const [user, setUser] = useState<User | null>(null);
     const [token, setToken] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(false);
+    const [isInitializing, setIsInitializing] = useState(true); // État d'initialisation
     const [isLoggingOut, setIsLoggingOut] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [isGoogleLoaded] = useState(true); // Toujours true pour la simulation
@@ -90,6 +91,8 @@ export const useAuth = (): UseAuthReturn => {
             } catch (err) {
                 console.error('❌ Error loading stored data:', err);
                 clearStoredData();
+            } finally {
+                setIsInitializing(false); // Marquer l'initialisation comme terminée
             }
         };
 
@@ -348,8 +351,8 @@ export const useAuth = (): UseAuthReturn => {
         user,
         token,
         isAuthenticated: !!user && !!token,
-        isLoading,
-        loading: isLoading || isLoggingOut, // Alias pour compatibilité
+        isLoading: isLoading || isInitializing, // Inclure l'état d'initialisation
+        loading: isLoading || isLoggingOut || isInitializing, // Alias pour compatibilité
         error,
         signInWithGoogle,
         signOut,
