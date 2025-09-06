@@ -42,6 +42,12 @@ interface AuthResponse {
     };
 }
 
+interface ApiResponseType {
+    user: User;
+    token: string;
+    token_type: string;
+}
+
 interface UseAuthReturn {
     user: User | null;
     token: string | null;
@@ -191,7 +197,7 @@ export const useAuth = (): UseAuthReturn => {
             };
 
             console.log('📤 Sending contributor data to API:', contributorData);
-            const apiResponse = await AuthService.loginContributor(contributorData);
+            const apiResponse = await AuthService.loginContributor(contributorData) as unknown as ApiResponseType;
             console.log('📥 API Response:', apiResponse);
 
             // Le client API retourne seulement data si success=true, sinon data complet
